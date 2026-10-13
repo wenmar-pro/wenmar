@@ -1,10 +1,15 @@
 # wenmar
 
-`wenmar` is the command-line client for [Wenmar](https://app.wenmarpro.com), the shop
-management system for repair shops. This repository holds **releases only**: prebuilt
-binaries, their checksums, and the install scripts. The source code is private.
+`wenmar` is the client for [Wenmar](https://app.wenmarpro.com), the shop management system
+for repair shops: the terminal client the shop works in (`wenmar tui`) and a command line
+for scripts and coding agents. This repository holds **releases only**: prebuilt binaries,
+their checksums, the install scripts and the documents below. The source code is private.
 
 ## Install
+
+The owner's account page (`https://app.wenmarpro.com/account`, "Install on a computer")
+shows one line with the shop's station code already in it. It installs `wenmar`, remembers
+the station and adds a Wenmar shortcut to the desktop. Without a station code:
 
 Linux and macOS:
 
@@ -24,10 +29,11 @@ With [mise](https://mise.jdx.dev):
 mise use -g github:wenmar-pro/wenmar
 ```
 
-Then sign in on this computer:
+Then sign this computer in to the shop and open the terminal client:
 
 ```sh
 wenmar setup
+wenmar tui
 ```
 
 Both install scripts download from this repository's
@@ -41,6 +47,9 @@ Options (environment variables):
 |---|---|---|
 | `WENMAR_VERSION` | Install this version, e.g. `0.2.0` | the latest release |
 | `WENMAR_INSTALL_DIR` | Where to put `wenmar` | `~/.local/bin`, or `%LOCALAPPDATA%\Programs\wenmar` on Windows |
+| `WENMAR_STATION` | The shop's access code: also sign this computer in to that station | not set: run `wenmar setup` |
+| `WENMAR_VIEW` | `foxpro` or `modern`: the view of `wenmar tui` (with `WENMAR_STATION`) | `modern` |
+| `WENMAR_NO_SHORTCUT` | Set to make no desktop shortcut | a shortcut is made |
 
 ## Update
 
@@ -66,6 +75,7 @@ Every release has one archive per platform plus `SHA256SUMS`:
 | Linux x86_64 (glibc 2.17+) | `wenmar-x86_64-unknown-linux-gnu.tar.gz` |
 | Linux arm64 (glibc 2.17+) | `wenmar-aarch64-unknown-linux-gnu.tar.gz` |
 | macOS Apple silicon | `wenmar-aarch64-apple-darwin.tar.gz` |
+| macOS Intel | `wenmar-x86_64-apple-darwin.tar.gz` |
 | Windows x86_64 | `wenmar-x86_64-pc-windows-gnu.tar.gz` |
 
 Each archive holds a single `wenmar` (or `wenmar.exe`) at its root. To verify by hand:
@@ -73,6 +83,14 @@ Each archive holds a single `wenmar` (or `wenmar.exe`) at its root. To verify by
 ```sh
 sha256sum -c SHA256SUMS --ignore-missing
 ```
+
+## For coding agents
+
+- [SKILL.md](SKILL.md): how an agent uses `wenmar` (the same text `wenmar skill` prints).
+- [commands.json](commands.json): every command, argument and flag (`wenmar commands --json`).
+- The HTTP API: `https://app.wenmarpro.com/openapi.json`.
+
+`wenmar setup claude` (or `codex`, `agent`) connects an agent to a shop.
 
 ## Help
 
