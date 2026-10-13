@@ -1,0 +1,2626 @@
+{
+  "name": "wenmar",
+  "global_flags": [
+    {
+      "name": "--profile",
+      "short": "-P",
+      "takes_value": true,
+      "required": false,
+      "help": "Profile to use (default: `default_profile` in config.toml, else \"default\")",
+      "env": "WENMAR_PROFILE"
+    },
+    {
+      "name": "--server",
+      "takes_value": true,
+      "required": false,
+      "help": "Server URL, overriding the profile",
+      "env": "WENMAR_SERVER"
+    },
+    {
+      "name": "--location",
+      "takes_value": true,
+      "required": false,
+      "help": "Location id to scope to, overriding the profile",
+      "env": "WENMAR_LOCATION_ID"
+    },
+    {
+      "name": "--json",
+      "takes_value": false,
+      "required": false,
+      "help": "JSON envelope: {ok, data, summary, breadcrumbs, meta}"
+    },
+    {
+      "name": "--agent",
+      "takes_value": false,
+      "required": false,
+      "help": "Bare JSON data (the default when stdout is not a terminal)"
+    },
+    {
+      "name": "--jq",
+      "takes_value": true,
+      "required": false,
+      "help": "Filter the data with a jq expression (built in; no jq needed)"
+    },
+    {
+      "name": "--ids-only",
+      "takes_value": false,
+      "required": false,
+      "help": "Print only ids, one per line"
+    },
+    {
+      "name": "--count",
+      "takes_value": false,
+      "required": false,
+      "help": "Print only the number of results"
+    },
+    {
+      "name": "--markdown",
+      "takes_value": false,
+      "required": false,
+      "help": "Markdown tables and documents"
+    },
+    {
+      "name": "--styled",
+      "takes_value": false,
+      "required": false,
+      "help": "Human tables even when stdout is not a terminal"
+    },
+    {
+      "name": "--allow-partial",
+      "takes_value": false,
+      "required": false,
+      "help": "Accept a list cut short by --all/--limit instead of failing with exit 9"
+    },
+    {
+      "name": "--debug",
+      "takes_value": false,
+      "required": false,
+      "help": "On failure, also print the profile, server, and credential source"
+    }
+  ],
+  "commands": [
+    {
+      "name": "status",
+      "path": "status",
+      "about": "Show the profile, server, and who is signed in (the default command)",
+      "runnable": true,
+      "write": false,
+      "args": [],
+      "flags": []
+    },
+    {
+      "name": "config",
+      "path": "config",
+      "about": "Show resolved settings and where each came from, or the file paths",
+      "runnable": false,
+      "write": false,
+      "args": [],
+      "flags": [],
+      "commands": [
+        {
+          "name": "show",
+          "path": "config show",
+          "about": "Resolved values (profile, server, token, location) and their source",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": []
+        },
+        {
+          "name": "path",
+          "path": "config path",
+          "about": "The config directory and the files in it",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": []
+        }
+      ]
+    },
+    {
+      "name": "setup",
+      "path": "setup",
+      "about": "Sign this computer in to a shop: server + access code (the station)",
+      "runnable": true,
+      "write": true,
+      "args": [
+        {
+          "name": "TARGET",
+          "required": false,
+          "multiple": false,
+          "help": "Connect a coding agent instead of this computer (plan 53)",
+          "values": [
+            "claude",
+            "codex",
+            "hermes",
+            "agent"
+          ]
+        }
+      ],
+      "flags": [
+        {
+          "name": "--local",
+          "takes_value": false,
+          "required": false,
+          "help": "Use the local dev server (`./.port`, else $PORT, else 3001) and name the profile `dev` unless `-P` is given"
+        },
+        {
+          "name": "--yes",
+          "short": "-y",
+          "takes_value": false,
+          "required": false,
+          "help": "Overwrite an existing profile without asking"
+        },
+        {
+          "name": "--name",
+          "takes_value": true,
+          "required": false,
+          "help": "Agent name for `setup claude|codex|hermes|agent` (default: the target name)"
+        },
+        {
+          "name": "--scope",
+          "takes_value": true,
+          "required": false,
+          "help": "Agent token scope for `setup claude|codex|hermes|agent`",
+          "values": [
+            "read",
+            "write"
+          ],
+          "default": "write"
+        },
+        {
+          "name": "--permissions",
+          "takes_value": true,
+          "required": false,
+          "help": "Limit the agent to these permissions (comma-separated, e.g. `customers.read,work_orders.write`). Default: everything you may do"
+        },
+        {
+          "name": "--irreversible",
+          "takes_value": true,
+          "required": false,
+          "help": "Whether the agent may post invoices, void and delete: `yes` or `no`. Default: yes from the command line, no through a chat connector",
+          "values": [
+            "yes",
+            "no"
+          ]
+        },
+        {
+          "name": "--profile-name",
+          "takes_value": true,
+          "required": false,
+          "help": "Profile the agent token is saved under",
+          "default": "agent"
+        },
+        {
+          "name": "--force",
+          "takes_value": false,
+          "required": false,
+          "help": "Replace a hand-written or hand-edited installed skill"
+        },
+        {
+          "name": "--access-code",
+          "takes_value": true,
+          "required": false,
+          "help": "The shop's access code. With it `setup` asks nothing about the server or the code (install scripts pass it, with `--yes`)"
+        },
+        {
+          "name": "--view",
+          "takes_value": true,
+          "required": false,
+          "help": "Which view `wenmar tui` shows on this computer (saved in config.toml)",
+          "values": [
+            "foxpro",
+            "modern"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "login",
+      "path": "login",
+      "about": "Sign in as a user of the saved station (user + PIN) and cache the session",
+      "runnable": true,
+      "write": false,
+      "args": [],
+      "flags": []
+    },
+    {
+      "name": "logout",
+      "path": "logout",
+      "about": "Sign out: end the cached session and remove it from this computer",
+      "runnable": true,
+      "write": false,
+      "args": [],
+      "flags": []
+    },
+    {
+      "name": "location",
+      "path": "location",
+      "about": "This profile's default location (`location use [ID]`)",
+      "runnable": false,
+      "write": false,
+      "args": [],
+      "flags": [],
+      "commands": [
+        {
+          "name": "use",
+          "path": "location use",
+          "about": "Make a location this profile's default. Without an ID, choose from a list",
+          "runnable": true,
+          "write": false,
+          "args": [
+            {
+              "name": "ID",
+              "required": false,
+              "multiple": false,
+              "help": "Location id (see `wenmar locations list`)"
+            }
+          ],
+          "flags": []
+        }
+      ]
+    },
+    {
+      "name": "version",
+      "path": "version",
+      "about": "Print the wenmar version",
+      "runnable": true,
+      "write": false,
+      "args": [],
+      "flags": []
+    },
+    {
+      "name": "completion",
+      "path": "completion",
+      "about": "Print a shell completion script",
+      "runnable": true,
+      "write": false,
+      "args": [
+        {
+          "name": "SHELL",
+          "required": true,
+          "multiple": false,
+          "values": [
+            "bash",
+            "elvish",
+            "fish",
+            "powershell",
+            "zsh"
+          ]
+        }
+      ],
+      "flags": []
+    },
+    {
+      "name": "help",
+      "path": "help",
+      "about": "Help on a topic (output, exit-codes, agents) or a command",
+      "runnable": true,
+      "write": false,
+      "args": [
+        {
+          "name": "TOPIC",
+          "required": false,
+          "multiple": true
+        }
+      ],
+      "flags": []
+    },
+    {
+      "name": "customers",
+      "path": "customers",
+      "about": "Customers: list, show",
+      "runnable": false,
+      "write": false,
+      "args": [],
+      "flags": [],
+      "commands": [
+        {
+          "name": "list",
+          "path": "customers list",
+          "about": "List customers",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": [
+            {
+              "name": "--page",
+              "takes_value": true,
+              "required": false,
+              "help": "Server page to fetch, starting at 1"
+            },
+            {
+              "name": "--per-page",
+              "takes_value": true,
+              "required": false,
+              "help": "Rows per page, 1-100 (the server caps pages at 100)"
+            },
+            {
+              "name": "--limit",
+              "takes_value": true,
+              "required": false,
+              "help": "Stop after N rows, following pages as needed"
+            },
+            {
+              "name": "--all",
+              "takes_value": false,
+              "required": false,
+              "help": "Follow every page (at most 50)"
+            }
+          ]
+        },
+        {
+          "name": "show",
+          "path": "customers show",
+          "about": "Show one customer",
+          "runnable": true,
+          "write": false,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false
+            }
+          ],
+          "flags": []
+        },
+        {
+          "name": "create",
+          "path": "customers create",
+          "about": "Create a customer. The server needs at least one of the three names",
+          "runnable": true,
+          "write": true,
+          "args": [],
+          "flags": [
+            {
+              "name": "--first-name",
+              "takes_value": true,
+              "required": false
+            },
+            {
+              "name": "--last-name",
+              "takes_value": true,
+              "required": false
+            },
+            {
+              "name": "--company-name",
+              "takes_value": true,
+              "required": false
+            },
+            {
+              "name": "--idempotency-key",
+              "takes_value": true,
+              "required": false,
+              "help": "Replay key: running again with the same key returns the first customer instead of creating another. Default: a new UUID per run"
+            }
+          ]
+        },
+        {
+          "name": "update",
+          "path": "customers update",
+          "about": "Change a customer; only the fields you pass are sent",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false,
+              "help": "Customer id"
+            }
+          ],
+          "flags": [
+            {
+              "name": "--first-name",
+              "takes_value": true,
+              "required": false
+            },
+            {
+              "name": "--last-name",
+              "takes_value": true,
+              "required": false
+            },
+            {
+              "name": "--company-name",
+              "takes_value": true,
+              "required": false
+            },
+            {
+              "name": "--marketing-opt-in",
+              "takes_value": true,
+              "required": false,
+              "help": "true or false",
+              "values": [
+                "true",
+                "false"
+              ]
+            },
+            {
+              "name": "--tax-exempt",
+              "takes_value": true,
+              "required": false,
+              "help": "true or false",
+              "values": [
+                "true",
+                "false"
+              ]
+            },
+            {
+              "name": "--credit-limit-cents",
+              "takes_value": true,
+              "required": false,
+              "help": "Credit limit in cents"
+            },
+            {
+              "name": "--no-credit-limit",
+              "takes_value": false,
+              "required": false,
+              "help": "Remove the credit limit (no limit)"
+            }
+          ]
+        },
+        {
+          "name": "delete",
+          "path": "customers delete",
+          "about": "Move a customer to the trash (soft delete; `restore` brings it back)",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false,
+              "help": "Customer id"
+            }
+          ],
+          "flags": []
+        },
+        {
+          "name": "restore",
+          "path": "customers restore",
+          "about": "Bring a trashed customer back",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false,
+              "help": "Customer id"
+            }
+          ],
+          "flags": []
+        }
+      ]
+    },
+    {
+      "name": "vehicles",
+      "path": "vehicles",
+      "about": "Vehicles: list, show",
+      "runnable": false,
+      "write": false,
+      "args": [],
+      "flags": [],
+      "commands": [
+        {
+          "name": "list",
+          "path": "vehicles list",
+          "about": "List vehicles, or one customer's vehicles",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": [
+            {
+              "name": "--customer",
+              "takes_value": true,
+              "required": false,
+              "help": "Only this customer's vehicles"
+            },
+            {
+              "name": "--page",
+              "takes_value": true,
+              "required": false,
+              "help": "Server page to fetch, starting at 1"
+            },
+            {
+              "name": "--per-page",
+              "takes_value": true,
+              "required": false,
+              "help": "Rows per page, 1-100 (the server caps pages at 100)"
+            },
+            {
+              "name": "--limit",
+              "takes_value": true,
+              "required": false,
+              "help": "Stop after N rows, following pages as needed"
+            },
+            {
+              "name": "--all",
+              "takes_value": false,
+              "required": false,
+              "help": "Follow every page (at most 50)"
+            }
+          ]
+        },
+        {
+          "name": "show",
+          "path": "vehicles show",
+          "about": "Show one vehicle",
+          "runnable": true,
+          "write": false,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false
+            }
+          ],
+          "flags": []
+        },
+        {
+          "name": "create",
+          "path": "vehicles create",
+          "about": "Add a vehicle to a customer. Not replay-safe: if a create may have gone through, check the customer's vehicles before running it again",
+          "runnable": true,
+          "write": true,
+          "args": [],
+          "flags": [
+            {
+              "name": "--customer",
+              "takes_value": true,
+              "required": true,
+              "help": "Owner (customer id)"
+            },
+            {
+              "name": "--year",
+              "takes_value": true,
+              "required": false
+            },
+            {
+              "name": "--make",
+              "takes_value": true,
+              "required": false
+            },
+            {
+              "name": "--model",
+              "takes_value": true,
+              "required": false
+            },
+            {
+              "name": "--vin",
+              "takes_value": true,
+              "required": false,
+              "help": "Up to 17 characters; unique among vehicles"
+            },
+            {
+              "name": "--license-plate",
+              "takes_value": true,
+              "required": false
+            },
+            {
+              "name": "--license-plate-state",
+              "takes_value": true,
+              "required": false,
+              "help": "Province/state code, as stored"
+            },
+            {
+              "name": "--color",
+              "takes_value": true,
+              "required": false,
+              "help": "Colour code, as stored"
+            },
+            {
+              "name": "--odometer-reading",
+              "takes_value": true,
+              "required": false
+            },
+            {
+              "name": "--odometer-unit",
+              "takes_value": true,
+              "required": false,
+              "help": "Odometer unit code, as stored (default 0)"
+            }
+          ]
+        },
+        {
+          "name": "update",
+          "path": "vehicles update",
+          "about": "Change a vehicle; only the fields you pass are sent",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false,
+              "help": "Vehicle id"
+            }
+          ],
+          "flags": [
+            {
+              "name": "--year",
+              "takes_value": true,
+              "required": false
+            },
+            {
+              "name": "--make",
+              "takes_value": true,
+              "required": false
+            },
+            {
+              "name": "--model",
+              "takes_value": true,
+              "required": false
+            },
+            {
+              "name": "--vin",
+              "takes_value": true,
+              "required": false,
+              "help": "Up to 17 characters; unique among vehicles"
+            },
+            {
+              "name": "--license-plate",
+              "takes_value": true,
+              "required": false
+            },
+            {
+              "name": "--license-plate-state",
+              "takes_value": true,
+              "required": false,
+              "help": "Province/state code, as stored"
+            },
+            {
+              "name": "--color",
+              "takes_value": true,
+              "required": false,
+              "help": "Colour code, as stored"
+            },
+            {
+              "name": "--odometer-reading",
+              "takes_value": true,
+              "required": false
+            },
+            {
+              "name": "--odometer-unit",
+              "takes_value": true,
+              "required": false,
+              "help": "Odometer unit code, as stored (default 0)"
+            }
+          ]
+        },
+        {
+          "name": "delete",
+          "path": "vehicles delete",
+          "about": "Move a vehicle to the trash (soft delete; `restore` brings it back)",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false,
+              "help": "Vehicle id"
+            }
+          ],
+          "flags": []
+        },
+        {
+          "name": "restore",
+          "path": "vehicles restore",
+          "about": "Bring a trashed vehicle back",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false,
+              "help": "Vehicle id"
+            }
+          ],
+          "flags": []
+        }
+      ]
+    },
+    {
+      "name": "parts",
+      "path": "parts",
+      "about": "Parts: list, show",
+      "runnable": false,
+      "write": false,
+      "args": [],
+      "flags": [],
+      "commands": [
+        {
+          "name": "list",
+          "path": "parts list",
+          "about": "List parts",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": [
+            {
+              "name": "--q",
+              "takes_value": true,
+              "required": false,
+              "help": "Match part number or name (case-insensitive)"
+            },
+            {
+              "name": "--page",
+              "takes_value": true,
+              "required": false,
+              "help": "Server page to fetch, starting at 1"
+            },
+            {
+              "name": "--per-page",
+              "takes_value": true,
+              "required": false,
+              "help": "Rows per page, 1-100 (the server caps pages at 100)"
+            },
+            {
+              "name": "--limit",
+              "takes_value": true,
+              "required": false,
+              "help": "Stop after N rows, following pages as needed"
+            },
+            {
+              "name": "--all",
+              "takes_value": false,
+              "required": false,
+              "help": "Follow every page (at most 50)"
+            }
+          ]
+        },
+        {
+          "name": "show",
+          "path": "parts show",
+          "about": "Show one part",
+          "runnable": true,
+          "write": false,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false
+            }
+          ],
+          "flags": []
+        }
+      ]
+    },
+    {
+      "name": "labor",
+      "path": "labor",
+      "about": "Labor templates: list",
+      "runnable": false,
+      "write": false,
+      "args": [],
+      "flags": [],
+      "commands": [
+        {
+          "name": "list",
+          "path": "labor list",
+          "about": "List labor templates",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": [
+            {
+              "name": "--q",
+              "takes_value": true,
+              "required": false,
+              "help": "Match labor code or description (case-insensitive)"
+            },
+            {
+              "name": "--page",
+              "takes_value": true,
+              "required": false,
+              "help": "Server page to fetch, starting at 1"
+            },
+            {
+              "name": "--per-page",
+              "takes_value": true,
+              "required": false,
+              "help": "Rows per page, 1-100 (the server caps pages at 100)"
+            },
+            {
+              "name": "--limit",
+              "takes_value": true,
+              "required": false,
+              "help": "Stop after N rows, following pages as needed"
+            },
+            {
+              "name": "--all",
+              "takes_value": false,
+              "required": false,
+              "help": "Follow every page (at most 50)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "packages",
+      "path": "packages",
+      "about": "Packages: list, show",
+      "runnable": false,
+      "write": false,
+      "args": [],
+      "flags": [],
+      "commands": [
+        {
+          "name": "list",
+          "path": "packages list",
+          "about": "List packages",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": [
+            {
+              "name": "--q",
+              "takes_value": true,
+              "required": false,
+              "help": "Match package name (case-insensitive)"
+            },
+            {
+              "name": "--page",
+              "takes_value": true,
+              "required": false,
+              "help": "Server page to fetch, starting at 1"
+            },
+            {
+              "name": "--per-page",
+              "takes_value": true,
+              "required": false,
+              "help": "Rows per page, 1-100 (the server caps pages at 100)"
+            },
+            {
+              "name": "--limit",
+              "takes_value": true,
+              "required": false,
+              "help": "Stop after N rows, following pages as needed"
+            },
+            {
+              "name": "--all",
+              "takes_value": false,
+              "required": false,
+              "help": "Follow every page (at most 50)"
+            }
+          ]
+        },
+        {
+          "name": "show",
+          "path": "packages show",
+          "about": "Show one package and its lines",
+          "runnable": true,
+          "write": false,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false
+            }
+          ],
+          "flags": []
+        }
+      ]
+    },
+    {
+      "name": "wo",
+      "path": "wo",
+      "about": "Work orders: list, show, services, line items, sublets",
+      "runnable": false,
+      "write": false,
+      "args": [],
+      "flags": [],
+      "commands": [
+        {
+          "name": "list",
+          "path": "wo list",
+          "about": "List work orders (scoped to --location / the profile's location)",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": [
+            {
+              "name": "--customer",
+              "takes_value": true,
+              "required": false,
+              "help": "Only this customer's work orders"
+            },
+            {
+              "name": "--vehicle",
+              "takes_value": true,
+              "required": false,
+              "help": "Only this vehicle's work orders"
+            },
+            {
+              "name": "--stage",
+              "takes_value": true,
+              "required": false,
+              "help": "Only work orders at this stage",
+              "values": [
+                "estimate",
+                "in-progress",
+                "completed",
+                "paid",
+                "voided",
+                "declined"
+              ]
+            },
+            {
+              "name": "--page",
+              "takes_value": true,
+              "required": false,
+              "help": "Server page to fetch, starting at 1"
+            },
+            {
+              "name": "--per-page",
+              "takes_value": true,
+              "required": false,
+              "help": "Rows per page, 1-100 (the server caps pages at 100)"
+            },
+            {
+              "name": "--limit",
+              "takes_value": true,
+              "required": false,
+              "help": "Stop after N rows, following pages as needed"
+            },
+            {
+              "name": "--all",
+              "takes_value": false,
+              "required": false,
+              "help": "Follow every page (at most 50)"
+            }
+          ]
+        },
+        {
+          "name": "show",
+          "path": "wo show",
+          "about": "Show one work order with its services, line items, and sublets",
+          "runnable": true,
+          "write": false,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false
+            }
+          ],
+          "flags": []
+        },
+        {
+          "name": "services",
+          "path": "wo services",
+          "about": "A work order's services",
+          "runnable": false,
+          "write": false,
+          "args": [],
+          "flags": [],
+          "commands": [
+            {
+              "name": "list",
+              "path": "wo services list",
+              "about": "List a work order's services",
+              "runnable": true,
+              "write": false,
+              "args": [
+                {
+                  "name": "WO",
+                  "required": true,
+                  "multiple": false
+                }
+              ],
+              "flags": []
+            },
+            {
+              "name": "add",
+              "path": "wo services add",
+              "about": "Add a service (a job) to a work order",
+              "runnable": true,
+              "write": true,
+              "args": [
+                {
+                  "name": "WORK_ORDER",
+                  "required": true,
+                  "multiple": false,
+                  "help": "Work order id"
+                },
+                {
+                  "name": "NAME",
+                  "required": false,
+                  "multiple": false,
+                  "help": "Service name, e.g. \"Front brakes\". `-` reads stdin"
+                }
+              ],
+              "flags": [
+                {
+                  "name": "--name",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Same as NAME"
+                },
+                {
+                  "name": "--service-type",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Service type code, as stored (default 0)"
+                },
+                {
+                  "name": "--technician",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Technician (user id)"
+                },
+                {
+                  "name": "--concern",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "The concern this service answers (concern id)"
+                },
+                {
+                  "name": "--customer-notes",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Notes for the customer. `-` reads stdin"
+                },
+                {
+                  "name": "--idempotency-key",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Replay key: running again with the same key returns the first service instead of adding another. Default: a new UUID per run"
+                }
+              ]
+            },
+            {
+              "name": "update",
+              "path": "wo services update",
+              "about": "Change a service; only the fields you pass are sent",
+              "runnable": true,
+              "write": true,
+              "args": [
+                {
+                  "name": "ID",
+                  "required": true,
+                  "multiple": false,
+                  "help": "Service id"
+                }
+              ],
+              "flags": [
+                {
+                  "name": "--name",
+                  "takes_value": true,
+                  "required": false
+                },
+                {
+                  "name": "--service-type",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Service type code, as stored"
+                },
+                {
+                  "name": "--technician",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Technician (user id)"
+                },
+                {
+                  "name": "--customer-notes",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Notes for the customer. `-` reads stdin"
+                },
+                {
+                  "name": "--dismissed",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Mark the service dismissed (true) or not (false)",
+                  "values": [
+                    "true",
+                    "false"
+                  ]
+                },
+                {
+                  "name": "--started-at",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "RFC 3339 timestamp"
+                },
+                {
+                  "name": "--completed-at",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "RFC 3339 timestamp"
+                }
+              ]
+            },
+            {
+              "name": "remove",
+              "path": "wo services remove",
+              "about": "Delete a service from its work order",
+              "runnable": true,
+              "write": true,
+              "args": [
+                {
+                  "name": "ID",
+                  "required": true,
+                  "multiple": false,
+                  "help": "Service id"
+                }
+              ],
+              "flags": []
+            }
+          ]
+        },
+        {
+          "name": "line-items",
+          "path": "wo line-items",
+          "about": "A work order's line items",
+          "runnable": false,
+          "write": false,
+          "args": [],
+          "flags": [],
+          "commands": [
+            {
+              "name": "list",
+              "path": "wo line-items list",
+              "about": "List line items: every service's, then those not under a service",
+              "runnable": true,
+              "write": false,
+              "args": [
+                {
+                  "name": "WO",
+                  "required": true,
+                  "multiple": false
+                }
+              ],
+              "flags": [
+                {
+                  "name": "--service",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Only this service's line items"
+                }
+              ]
+            },
+            {
+              "name": "add",
+              "path": "wo line-items add",
+              "about": "Add a line to a work order, or to one of its services with --service",
+              "runnable": true,
+              "write": true,
+              "args": [
+                {
+                  "name": "WORK_ORDER",
+                  "required": true,
+                  "multiple": false,
+                  "help": "Work order id"
+                },
+                {
+                  "name": "DESCRIPTION",
+                  "required": false,
+                  "multiple": false,
+                  "help": "What the line is, e.g. \"Brake pads\". `-` reads stdin; omitted at a terminal opens $EDITOR"
+                }
+              ],
+              "flags": [
+                {
+                  "name": "--description",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Same as DESCRIPTION"
+                },
+                {
+                  "name": "--service",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Put the line under this service; omitted = directly on the work order"
+                },
+                {
+                  "name": "--kind",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Line kind (default labor)",
+                  "values": [
+                    "labor",
+                    "part",
+                    "fee",
+                    "discount"
+                  ]
+                },
+                {
+                  "name": "--quantity-hundredths",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Quantity in hundredths (150 = 1.5; default 100)"
+                },
+                {
+                  "name": "--unit-price-cents",
+                  "takes_value": true,
+                  "required": false
+                },
+                {
+                  "name": "--unit-cost-cents",
+                  "takes_value": true,
+                  "required": false
+                },
+                {
+                  "name": "--total-cents",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Flat amount for fee and discount lines (labor and part totals are computed by the server)"
+                },
+                {
+                  "name": "--technician",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Technician (user id)"
+                },
+                {
+                  "name": "--notes",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "`-` reads stdin"
+                },
+                {
+                  "name": "--idempotency-key",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Replay key: running again with the same key returns the first line instead of adding another. Default: a new UUID per run"
+                }
+              ]
+            },
+            {
+              "name": "update",
+              "path": "wo line-items update",
+              "about": "Change a line; only the fields you pass are sent",
+              "runnable": true,
+              "write": true,
+              "args": [
+                {
+                  "name": "ID",
+                  "required": true,
+                  "multiple": false,
+                  "help": "Line item id"
+                }
+              ],
+              "flags": [
+                {
+                  "name": "--description",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "`-` reads stdin"
+                },
+                {
+                  "name": "--quantity-hundredths",
+                  "takes_value": true,
+                  "required": false
+                },
+                {
+                  "name": "--unit-price-cents",
+                  "takes_value": true,
+                  "required": false
+                },
+                {
+                  "name": "--unit-cost-cents",
+                  "takes_value": true,
+                  "required": false
+                },
+                {
+                  "name": "--total-cents",
+                  "takes_value": true,
+                  "required": false
+                },
+                {
+                  "name": "--part-status",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Part status code, as stored"
+                },
+                {
+                  "name": "--technician",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Technician (user id)"
+                },
+                {
+                  "name": "--notes",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "`-` reads stdin"
+                }
+              ]
+            },
+            {
+              "name": "remove",
+              "path": "wo line-items remove",
+              "about": "Delete a line",
+              "runnable": true,
+              "write": true,
+              "args": [
+                {
+                  "name": "ID",
+                  "required": true,
+                  "multiple": false,
+                  "help": "Line item id"
+                }
+              ],
+              "flags": []
+            }
+          ]
+        },
+        {
+          "name": "sublets",
+          "path": "wo sublets",
+          "about": "A work order's sublets",
+          "runnable": false,
+          "write": false,
+          "args": [],
+          "flags": [],
+          "commands": [
+            {
+              "name": "list",
+              "path": "wo sublets list",
+              "about": "List sublets across the work order's services",
+              "runnable": true,
+              "write": false,
+              "args": [
+                {
+                  "name": "WO",
+                  "required": true,
+                  "multiple": false
+                }
+              ],
+              "flags": [
+                {
+                  "name": "--service",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Only this service's sublets"
+                }
+              ]
+            },
+            {
+              "name": "add",
+              "path": "wo sublets add",
+              "about": "Add outside work to a service. Not replay-safe: the server does not key sublet creates, so check the service before running it again",
+              "runnable": true,
+              "write": true,
+              "args": [
+                {
+                  "name": "WORK_ORDER",
+                  "required": true,
+                  "multiple": false,
+                  "help": "Work order id"
+                },
+                {
+                  "name": "DESCRIPTION",
+                  "required": false,
+                  "multiple": false,
+                  "help": "What the vendor did, e.g. \"Wheel alignment\". `-` reads stdin; omitted at a terminal opens $EDITOR"
+                }
+              ],
+              "flags": [
+                {
+                  "name": "--description",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Same as DESCRIPTION"
+                },
+                {
+                  "name": "--service",
+                  "takes_value": true,
+                  "required": true,
+                  "help": "The service the sublet belongs to"
+                },
+                {
+                  "name": "--quantity-hundredths",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Quantity in hundredths (default 100)"
+                },
+                {
+                  "name": "--unit-cost-cents",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Vendor cost in cents"
+                },
+                {
+                  "name": "--unit-price-cents",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Selling price in cents; omitted = derived by the server from the cost"
+                },
+                {
+                  "name": "--taxable",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "Taxable (true or false; default true)",
+                  "values": [
+                    "true",
+                    "false"
+                  ]
+                },
+                {
+                  "name": "--notes",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "`-` reads stdin"
+                }
+              ]
+            },
+            {
+              "name": "update",
+              "path": "wo sublets update",
+              "about": "Change a sublet; only the fields you pass are sent",
+              "runnable": true,
+              "write": true,
+              "args": [
+                {
+                  "name": "ID",
+                  "required": true,
+                  "multiple": false,
+                  "help": "Sublet id"
+                }
+              ],
+              "flags": [
+                {
+                  "name": "--description",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "`-` reads stdin"
+                },
+                {
+                  "name": "--quantity-hundredths",
+                  "takes_value": true,
+                  "required": false
+                },
+                {
+                  "name": "--unit-cost-cents",
+                  "takes_value": true,
+                  "required": false
+                },
+                {
+                  "name": "--unit-price-cents",
+                  "takes_value": true,
+                  "required": false
+                },
+                {
+                  "name": "--taxable",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "true or false",
+                  "values": [
+                    "true",
+                    "false"
+                  ]
+                },
+                {
+                  "name": "--notes",
+                  "takes_value": true,
+                  "required": false,
+                  "help": "`-` reads stdin"
+                }
+              ]
+            },
+            {
+              "name": "remove",
+              "path": "wo sublets remove",
+              "about": "Delete a sublet",
+              "runnable": true,
+              "write": true,
+              "args": [
+                {
+                  "name": "ID",
+                  "required": true,
+                  "multiple": false,
+                  "help": "Sublet id"
+                }
+              ],
+              "flags": []
+            }
+          ]
+        },
+        {
+          "name": "create",
+          "path": "wo create",
+          "about": "Open a work order for a customer and/or vehicle",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "NOTES",
+              "required": false,
+              "multiple": false,
+              "help": "Notes (the customer's concern). `-` reads stdin; omitted at a terminal opens $EDITOR"
+            }
+          ],
+          "flags": [
+            {
+              "name": "--notes",
+              "takes_value": true,
+              "required": false,
+              "help": "Same as NOTES"
+            },
+            {
+              "name": "--customer",
+              "takes_value": true,
+              "required": false,
+              "help": "Customer id (a customer or a vehicle is required)"
+            },
+            {
+              "name": "--vehicle",
+              "takes_value": true,
+              "required": false,
+              "help": "Vehicle id"
+            },
+            {
+              "name": "--odometer-in",
+              "takes_value": true,
+              "required": false,
+              "help": "Odometer reading at drop-off"
+            },
+            {
+              "name": "--number",
+              "takes_value": true,
+              "required": false,
+              "help": "Hand-entered work-order number; used only when the location numbers work orders by hand (prenumbered)"
+            },
+            {
+              "name": "--idempotency-key",
+              "takes_value": true,
+              "required": false,
+              "help": "Replay key: running again with the same key returns the first work order instead of opening another. Default: a new UUID per run"
+            }
+          ]
+        },
+        {
+          "name": "update",
+          "path": "wo update",
+          "about": "Change a work order's header; only the fields you pass are sent",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false,
+              "help": "Work order id"
+            }
+          ],
+          "flags": [
+            {
+              "name": "--customer",
+              "takes_value": true,
+              "required": false,
+              "help": "Customer id"
+            },
+            {
+              "name": "--vehicle",
+              "takes_value": true,
+              "required": false,
+              "help": "Vehicle id"
+            },
+            {
+              "name": "--odometer-in",
+              "takes_value": true,
+              "required": false
+            },
+            {
+              "name": "--odometer-out",
+              "takes_value": true,
+              "required": false
+            },
+            {
+              "name": "--freight-cents",
+              "takes_value": true,
+              "required": false,
+              "help": "Freight in cents (not negative)"
+            },
+            {
+              "name": "--notes",
+              "takes_value": true,
+              "required": false,
+              "help": "Work-order notes. `-` reads stdin"
+            },
+            {
+              "name": "--order-date",
+              "takes_value": true,
+              "required": false,
+              "help": "Order date; must fall inside the location's posting window"
+            },
+            {
+              "name": "--type",
+              "takes_value": true,
+              "required": false,
+              "help": "Work-order type",
+              "values": [
+                "R",
+                "I",
+                "W",
+                "C"
+              ]
+            },
+            {
+              "name": "--claim-number",
+              "takes_value": true,
+              "required": false
+            },
+            {
+              "name": "--reference-number",
+              "takes_value": true,
+              "required": false
+            }
+          ]
+        },
+        {
+          "name": "start",
+          "path": "wo start",
+          "about": "Start work (estimate to in progress)",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false,
+              "help": "Work order id"
+            }
+          ],
+          "flags": []
+        },
+        {
+          "name": "complete",
+          "path": "wo complete",
+          "about": "Mark the work complete",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false,
+              "help": "Work order id"
+            }
+          ],
+          "flags": []
+        },
+        {
+          "name": "close",
+          "path": "wo close",
+          "about": "Close (post) the work order",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false,
+              "help": "Work order id"
+            }
+          ],
+          "flags": [
+            {
+              "name": "--charge-to-account",
+              "takes_value": false,
+              "required": false,
+              "help": "Post the unpaid balance to the customer's account (needs billing terms)"
+            }
+          ]
+        },
+        {
+          "name": "void",
+          "path": "wo void",
+          "about": "Void the work order",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false,
+              "help": "Work order id"
+            }
+          ],
+          "flags": [
+            {
+              "name": "--reason",
+              "takes_value": true,
+              "required": false,
+              "help": "Why; stored as the closure reason. `-` reads stdin"
+            }
+          ]
+        },
+        {
+          "name": "decline",
+          "path": "wo decline",
+          "about": "Decline the work order (the customer said no)",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false,
+              "help": "Work order id"
+            }
+          ],
+          "flags": [
+            {
+              "name": "--reason",
+              "takes_value": true,
+              "required": false,
+              "help": "Why; stored as the closure reason. `-` reads stdin"
+            }
+          ]
+        },
+        {
+          "name": "reopen",
+          "path": "wo reopen",
+          "about": "Reopen a completed, closed, voided or declined work order",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false,
+              "help": "Work order id"
+            }
+          ],
+          "flags": []
+        },
+        {
+          "name": "apply-package",
+          "path": "wo apply-package",
+          "about": "Add a package's service and lines to a work order",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "WORK_ORDER",
+              "required": true,
+              "multiple": false,
+              "help": "Work order id"
+            },
+            {
+              "name": "PACKAGE",
+              "required": true,
+              "multiple": false,
+              "help": "Package id"
+            }
+          ],
+          "flags": [
+            {
+              "name": "--idempotency-key",
+              "takes_value": true,
+              "required": false,
+              "help": "Replay key: running again with the same key returns the first service instead of applying the package twice. Default: a new UUID per run"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "search",
+      "path": "search",
+      "about": "Search customers, vehicles, and work orders",
+      "runnable": true,
+      "write": false,
+      "args": [
+        {
+          "name": "Q",
+          "required": true,
+          "multiple": false,
+          "help": "Text to search for"
+        }
+      ],
+      "flags": []
+    },
+    {
+      "name": "query",
+      "path": "query",
+      "about": "Business questions: saved reports, SQL over the analytics tables",
+      "runnable": false,
+      "write": false,
+      "args": [],
+      "flags": [],
+      "commands": [
+        {
+          "name": "suggest",
+          "path": "query suggest",
+          "about": "The reports this shop can run, with which have data",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": []
+        },
+        {
+          "name": "list",
+          "path": "query list",
+          "about": "The saved and built-in reports: name, question, origin",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": []
+        },
+        {
+          "name": "run",
+          "path": "query run",
+          "about": "Run one saved or built-in report and show it",
+          "runnable": true,
+          "write": false,
+          "args": [
+            {
+              "name": "NAME",
+              "required": true,
+              "multiple": false,
+              "help": "The report's name (see `query list`)"
+            }
+          ],
+          "flags": [
+            {
+              "name": "--range",
+              "takes_value": true,
+              "required": false,
+              "help": "A range word such as `last_month`"
+            },
+            {
+              "name": "--from",
+              "takes_value": true,
+              "required": false,
+              "help": "First day, `YYYY-MM-DD` (with `--to`)"
+            },
+            {
+              "name": "--to",
+              "takes_value": true,
+              "required": false,
+              "help": "Last day, `YYYY-MM-DD` (with `--from`)"
+            },
+            {
+              "name": "--param",
+              "takes_value": true,
+              "required": false,
+              "help": "Another parameter the report declares, `K=V` (repeatable)"
+            },
+            {
+              "name": "--show-sql",
+              "takes_value": false,
+              "required": false,
+              "help": "Include the report's SQL in the answer"
+            }
+          ]
+        },
+        {
+          "name": "sql",
+          "path": "query sql",
+          "about": "Run one SELECT over the shop's analytics tables",
+          "runnable": true,
+          "write": false,
+          "args": [
+            {
+              "name": "SQL",
+              "required": true,
+              "multiple": false,
+              "help": "One SELECT statement (see `query schema` for the tables)"
+            }
+          ],
+          "flags": [
+            {
+              "name": "--param",
+              "takes_value": true,
+              "required": false,
+              "help": "A named parameter's value, `K=V` (repeatable)"
+            }
+          ]
+        },
+        {
+          "name": "schema",
+          "path": "query schema",
+          "about": "The analytics tables and columns: what each means",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": []
+        },
+        {
+          "name": "save",
+          "path": "query save",
+          "about": "Save a question and its SQL as a report the shop can run",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "NAME",
+              "required": true,
+              "multiple": false,
+              "help": "The report's name: lowercase letters, numbers, dashes"
+            }
+          ],
+          "flags": [
+            {
+              "name": "--question",
+              "takes_value": true,
+              "required": true,
+              "help": "The question in the user's words"
+            },
+            {
+              "name": "--sql",
+              "takes_value": true,
+              "required": true,
+              "help": "The report's SQL, or `-` to read it from stdin"
+            },
+            {
+              "name": "--description",
+              "takes_value": true,
+              "required": false,
+              "help": "A one-line description"
+            }
+          ]
+        },
+        {
+          "name": "remove",
+          "path": "query remove",
+          "about": "Remove a saved report",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "NAME",
+              "required": true,
+              "multiple": false,
+              "help": "The report's name"
+            }
+          ],
+          "flags": []
+        },
+        {
+          "name": "refresh",
+          "path": "query refresh",
+          "about": "Rebuild the analytics tables from the shop's data",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": []
+        },
+        {
+          "name": "export",
+          "path": "query export",
+          "about": "Download a report as a PDF or a CSV file",
+          "runnable": true,
+          "write": false,
+          "args": [
+            {
+              "name": "NAME",
+              "required": true,
+              "multiple": false,
+              "help": "The report's name (see `query list`)"
+            }
+          ],
+          "flags": [
+            {
+              "name": "--format",
+              "takes_value": true,
+              "required": false,
+              "help": "`pdf` (default) or `csv`",
+              "default": "pdf"
+            },
+            {
+              "name": "--out",
+              "takes_value": true,
+              "required": false,
+              "help": "Where to write the file (default `./<name>.<format>`)"
+            },
+            {
+              "name": "--force",
+              "takes_value": false,
+              "required": false,
+              "help": "Overwrite the file if it exists"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "reports",
+      "path": "reports",
+      "about": "FoxPro-view text reports: the appointment code list, maintenance required",
+      "runnable": false,
+      "write": false,
+      "args": [],
+      "flags": [],
+      "commands": [
+        {
+          "name": "appointment-codes",
+          "path": "reports appointment-codes",
+          "about": "The appointment code list (SECODER)",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": []
+        },
+        {
+          "name": "maintenance-required",
+          "path": "reports maintenance-required",
+          "about": "The maintenance required report (SERMAINT), by due date",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": [
+            {
+              "name": "--from",
+              "takes_value": true,
+              "required": true,
+              "help": "First due date, `YYYY-MM-DD`"
+            },
+            {
+              "name": "--to",
+              "takes_value": true,
+              "required": true,
+              "help": "Last due date, `YYYY-MM-DD`"
+            },
+            {
+              "name": "--item",
+              "takes_value": true,
+              "required": false,
+              "help": "One item's code; omitted = all items"
+            }
+          ]
+        },
+        {
+          "name": "list",
+          "path": "reports list",
+          "about": "The saved reports (plan 728): name, question, origin",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": []
+        },
+        {
+          "name": "show",
+          "path": "reports show",
+          "about": "Run a saved report now and show it (plan 728)",
+          "runnable": true,
+          "write": false,
+          "args": [
+            {
+              "name": "NAME",
+              "required": true,
+              "multiple": false,
+              "help": "The report's name (see `reports list`)"
+            }
+          ],
+          "flags": [
+            {
+              "name": "--range",
+              "takes_value": true,
+              "required": false,
+              "help": "A range word such as `last_month`"
+            },
+            {
+              "name": "--from",
+              "takes_value": true,
+              "required": false,
+              "help": "First day, `YYYY-MM-DD` (with `--to`)"
+            },
+            {
+              "name": "--to",
+              "takes_value": true,
+              "required": false,
+              "help": "Last day, `YYYY-MM-DD` (with `--from`)"
+            },
+            {
+              "name": "--param",
+              "takes_value": true,
+              "required": false,
+              "help": "Another parameter the report declares, `K=V` (repeatable)"
+            }
+          ]
+        },
+        {
+          "name": "pdf",
+          "path": "reports pdf",
+          "about": "Run a saved report now and save its PDF (plan 728)",
+          "runnable": true,
+          "write": false,
+          "args": [
+            {
+              "name": "NAME",
+              "required": true,
+              "multiple": false,
+              "help": "The report's name (see `reports list`)"
+            }
+          ],
+          "flags": [
+            {
+              "name": "--range",
+              "takes_value": true,
+              "required": false,
+              "help": "A range word such as `last_month`"
+            },
+            {
+              "name": "--from",
+              "takes_value": true,
+              "required": false,
+              "help": "First day, `YYYY-MM-DD` (with `--to`)"
+            },
+            {
+              "name": "--to",
+              "takes_value": true,
+              "required": false,
+              "help": "Last day, `YYYY-MM-DD` (with `--from`)"
+            },
+            {
+              "name": "--param",
+              "takes_value": true,
+              "required": false,
+              "help": "Another parameter the report declares, `K=V` (repeatable)"
+            },
+            {
+              "name": "--o",
+              "short": "-o",
+              "takes_value": true,
+              "required": false,
+              "help": "Where to save the PDF. Default: `./<name>.pdf`"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "users",
+      "path": "users",
+      "about": "Users: list, show",
+      "runnable": false,
+      "write": false,
+      "args": [],
+      "flags": [],
+      "commands": [
+        {
+          "name": "list",
+          "path": "users list",
+          "about": "List the account's users",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": []
+        },
+        {
+          "name": "show",
+          "path": "users show",
+          "about": "Show one user",
+          "runnable": true,
+          "write": false,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false
+            }
+          ],
+          "flags": []
+        }
+      ]
+    },
+    {
+      "name": "locations",
+      "path": "locations",
+      "about": "Locations: list, show (`location use` sets the default)",
+      "runnable": false,
+      "write": false,
+      "args": [],
+      "flags": [],
+      "commands": [
+        {
+          "name": "list",
+          "path": "locations list",
+          "about": "List locations",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": [
+            {
+              "name": "--page",
+              "takes_value": true,
+              "required": false,
+              "help": "Server page to fetch, starting at 1"
+            },
+            {
+              "name": "--per-page",
+              "takes_value": true,
+              "required": false,
+              "help": "Rows per page, 1-100 (the server caps pages at 100)"
+            },
+            {
+              "name": "--limit",
+              "takes_value": true,
+              "required": false,
+              "help": "Stop after N rows, following pages as needed"
+            },
+            {
+              "name": "--all",
+              "takes_value": false,
+              "required": false,
+              "help": "Follow every page (at most 50)"
+            }
+          ]
+        },
+        {
+          "name": "show",
+          "path": "locations show",
+          "about": "Show one location",
+          "runnable": true,
+          "write": false,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false
+            }
+          ],
+          "flags": []
+        }
+      ]
+    },
+    {
+      "name": "jobs",
+      "path": "jobs",
+      "about": "Background jobs: list, show (owner)",
+      "runnable": false,
+      "write": false,
+      "args": [],
+      "flags": [],
+      "commands": [
+        {
+          "name": "list",
+          "path": "jobs list",
+          "about": "List background jobs, newest first, with counts by state",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": [
+            {
+              "name": "--state",
+              "takes_value": true,
+              "required": false,
+              "values": [
+                "pending",
+                "running",
+                "done",
+                "dead"
+              ]
+            },
+            {
+              "name": "--kind",
+              "takes_value": true,
+              "required": false,
+              "help": "Only jobs of this kind"
+            },
+            {
+              "name": "--limit",
+              "takes_value": true,
+              "required": false,
+              "help": "Maximum rows, 1-500 (server default 100)"
+            }
+          ]
+        },
+        {
+          "name": "show",
+          "path": "jobs show",
+          "about": "Show one job",
+          "runnable": true,
+          "write": false,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false
+            }
+          ],
+          "flags": []
+        }
+      ]
+    },
+    {
+      "name": "upgrade",
+      "path": "upgrade",
+      "about": "Update wenmar to the newest release (or `--version V`), verified by SHA-256",
+      "runnable": true,
+      "write": false,
+      "args": [],
+      "flags": [
+        {
+          "name": "--check",
+          "takes_value": false,
+          "required": false,
+          "help": "Only report whether a newer release exists; download nothing"
+        },
+        {
+          "name": "--version",
+          "takes_value": true,
+          "required": false,
+          "help": "Install this exact version (for example 0.2.0), newer or older"
+        }
+      ]
+    },
+    {
+      "name": "skill",
+      "path": "skill",
+      "about": "Print the bundled agent skill (SKILL.md), or install it",
+      "runnable": true,
+      "write": false,
+      "args": [],
+      "flags": [],
+      "commands": [
+        {
+          "name": "install",
+          "path": "skill install",
+          "about": "Install the skill for Claude Code (~/.claude/skills/wenmar) and/or other agents (~/.agents/skills/wenmar). Default: both",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": [
+            {
+              "name": "--target",
+              "takes_value": true,
+              "required": false,
+              "values": [
+                "claude",
+                "agents"
+              ]
+            },
+            {
+              "name": "--force",
+              "takes_value": false,
+              "required": false,
+              "help": "Replace a copy that wenmar did not write or that was edited by hand"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "commands",
+      "path": "commands",
+      "about": "Print every command, argument, and flag (`--json` for agents)",
+      "runnable": true,
+      "write": false,
+      "args": [],
+      "flags": []
+    },
+    {
+      "name": "tools",
+      "path": "tools",
+      "about": "List or call server operations directly",
+      "runnable": false,
+      "write": false,
+      "args": [],
+      "flags": [],
+      "commands": [
+        {
+          "name": "list",
+          "path": "tools list",
+          "about": "List every server operation: name, description, params JSON schema",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": []
+        },
+        {
+          "name": "call",
+          "path": "tools call",
+          "about": "Run one server operation by name (reaches anything without a command)",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "NAME",
+              "required": true,
+              "multiple": false,
+              "help": "Tool name from `wenmar tools list`, e.g customers.create"
+            }
+          ],
+          "flags": [
+            {
+              "name": "--params",
+              "takes_value": true,
+              "required": false,
+              "help": "JSON object: inline, `@file.json`, or `-` for stdin. Default `{}`"
+            },
+            {
+              "name": "--idempotency-key",
+              "takes_value": true,
+              "required": false,
+              "help": "Sent as `Idempotency-Key`: re-run with the same key to retry a create safely. No key is sent without this flag"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "agents",
+      "path": "agents",
+      "about": "Create, list, and revoke agent tokens (connected coding agents)",
+      "runnable": false,
+      "write": false,
+      "args": [],
+      "flags": [],
+      "commands": [
+        {
+          "name": "list",
+          "path": "agents list",
+          "about": "List agent tokens (yours; owners see the whole account's)",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": []
+        },
+        {
+          "name": "create",
+          "path": "agents create",
+          "about": "Create an agent token and print it once",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "NAME",
+              "required": true,
+              "multiple": false,
+              "help": "Name shown in `wenmar agents list` and the audit log"
+            }
+          ],
+          "flags": [
+            {
+              "name": "--scope",
+              "takes_value": true,
+              "required": false,
+              "values": [
+                "read",
+                "write"
+              ],
+              "default": "write"
+            },
+            {
+              "name": "--permissions",
+              "takes_value": true,
+              "required": false,
+              "help": "Limit the agent to these permissions (comma-separated, e.g. `customers.read,work_orders.write`). Default: everything you may do"
+            },
+            {
+              "name": "--irreversible",
+              "takes_value": true,
+              "required": false,
+              "help": "Whether the agent may post invoices, void and delete: `yes` or `no`. Default: yes from the command line, no through a chat connector",
+              "values": [
+                "yes",
+                "no"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "revoke",
+          "path": "agents revoke",
+          "about": "Revoke an agent token; the agent's next request fails with exit 2",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false,
+              "help": "Id from `wenmar agents list`"
+            }
+          ],
+          "flags": []
+        }
+      ]
+    },
+    {
+      "name": "doctor",
+      "path": "doctor",
+      "about": "Check version, config, server, credential, skill, and MCP; print fixes",
+      "runnable": true,
+      "write": false,
+      "args": [],
+      "flags": []
+    },
+    {
+      "name": "watch",
+      "path": "watch",
+      "about": "Watch work orders, customers, or vehicles and print one JSON line per change",
+      "runnable": true,
+      "write": false,
+      "args": [],
+      "flags": [
+        {
+          "name": "--resource",
+          "takes_value": true,
+          "required": true,
+          "help": "What to watch",
+          "values": [
+            "work_orders",
+            "customers",
+            "vehicles"
+          ]
+        },
+        {
+          "name": "--events",
+          "takes_value": true,
+          "required": false,
+          "help": "Which changes to report, comma-separated (default: all)",
+          "values": [
+            "added",
+            "updated",
+            "deleted"
+          ]
+        },
+        {
+          "name": "--since",
+          "takes_value": true,
+          "required": false,
+          "help": "Report changes after this RFC 3339 time instead of from now"
+        },
+        {
+          "name": "--interval",
+          "takes_value": true,
+          "required": false,
+          "help": "Time between polls (e.g. 10s, 1500ms, 2m; minimum 1s)",
+          "default": "10s"
+        },
+        {
+          "name": "--exit-on-first",
+          "takes_value": false,
+          "required": false,
+          "help": "Exit 0 after the first reported change"
+        },
+        {
+          "name": "--run-sync",
+          "takes_value": true,
+          "required": false,
+          "help": "Run CMD for each change and wait for it (event JSON on stdin)"
+        },
+        {
+          "name": "--run-async",
+          "takes_value": true,
+          "required": false,
+          "help": "Start CMD for each change without waiting (at most 4 at once)"
+        }
+      ]
+    },
+    {
+      "name": "mcp",
+      "path": "mcp",
+      "about": "Run an MCP server on stdio for coding agents (uses the active profile's agent token)",
+      "runnable": true,
+      "write": false,
+      "args": [],
+      "flags": []
+    },
+    {
+      "name": "tui",
+      "path": "tui",
+      "about": "Open the terminal client: the screens the shop works in",
+      "runnable": true,
+      "write": false,
+      "args": [],
+      "flags": []
+    },
+    {
+      "name": "icon",
+      "path": "icon",
+      "about": "Write the Wenmar icon to a file (.png, .ico or .icns)",
+      "runnable": true,
+      "write": false,
+      "args": [
+        {
+          "name": "FILE",
+          "required": true,
+          "multiple": false,
+          "help": "Where to write it; the ending picks the format: .png, .ico or .icns"
+        }
+      ],
+      "flags": []
+    }
+  ]
+}
