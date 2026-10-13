@@ -4,6 +4,10 @@
 #   WENMAR_VERSION       version to install, e.g. 0.2.0 (default: the latest release)
 #   WENMAR_INSTALL_DIR   where to put wenmar.exe (default: %LOCALAPPDATA%\Programs\wenmar)
 #   WENMAR_DOWNLOAD_URL  release downloads (default: GitHub releases of wenmar-pro/wenmar)
+#   WENMAR_STATION       the shop's access code: also sign this computer in to that station
+#   WENMAR_VIEW          foxpro or modern: the view of `wenmar tui` (with WENMAR_STATION)
+#   WENMAR_NO_SHORTCUT   set to make no desktop shortcut
+#   WENMAR_DESKTOP_DIR   where the shortcut goes (default: the desktop folder)
 # The download is checked against the release's SHA256SUMS before install.
 # Needs Windows 10 1803+ or Windows 11 (tar.exe).
 # Source of truth: dist/github-releases-repo/ in the private wenmar repository.
@@ -62,7 +66,33 @@ try {
         Write-Host "Added $InstallDir to your PATH (open a new terminal)"
     }
     Write-Host "Installed $Label to $dest"
-    Write-Host 'Next: wenmar setup'
+    $next = 'wenmar setup, then wenmar tui'
+    if ($env:WENMAR_STATION) {
+        $setupArgs = @('setup', '--yes', '--access-code', $env:WENMAR_STATION)
+        if ($env:WENMAR_VIEW) { $setupArgs += @('--view', $env:WENMAR_VIEW) }
+        & $dest @setupArgs | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "This computer is set up for station $($env:WENMAR_STATION)"
+            $next = 'wenmar tui'
+        } else {
+            Write-Host 'Could not set up the station; run: wenmar setup'
+        }
+    }
+    if (-not $env:WENMAR_NO_SHORTCUT) {
+        try {
+            $desktop = if ($env:WENMAR_DESKTOP_DIR) { $env:WENMAR_DESKTOP_DIR } else { [Environment]::GetFolderPath('Desktop') }
+            $shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $desktop 'Wenmar.lnk'))
+            $shortcut.TargetPath = $dest
+            $shortcut.Arguments = 'tui'
+            $shortcut.WorkingDirectory = $env:USERPROFILE
+            $shortcut.Description = 'Wenmar'
+            $shortcut.Save()
+            Write-Host 'Added Wenmar to the desktop'
+        } catch {
+            Write-Host "Could not add the desktop shortcut: $_"
+        }
+    }
+    Write-Host "Next: $next"
 } finally {
     Remove-Item -Recurse -Force $Tmp -ErrorAction SilentlyContinue
 }
