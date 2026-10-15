@@ -4,8 +4,8 @@
 #   WENMAR_VERSION       version to install, e.g. 0.2.0 (default: the latest release)
 #   WENMAR_INSTALL_DIR   where to put wenmar.exe (default: %LOCALAPPDATA%\Programs\wenmar)
 #   WENMAR_DOWNLOAD_URL  release downloads (default: GitHub releases of wenmar-pro/wenmar)
-#   WENMAR_STATION       the shop's access code: also sign this computer in to that station
-#   WENMAR_VIEW          foxpro or modern: the view of `wenmar tui` (with WENMAR_STATION)
+#   WENMAR_PAIR          a pairing code from the shop's owner: also pair this computer with the shop
+#   WENMAR_VIEW          foxpro or modern: the view of `wenmar tui` (with WENMAR_PAIR)
 #   WENMAR_NO_SHORTCUT   set to make no desktop shortcut
 #   WENMAR_DESKTOP_DIR   where the shortcut goes (default: the desktop folder)
 # The download is checked against the release's SHA256SUMS before install.
@@ -67,27 +67,38 @@ try {
     }
     Write-Host "Installed $Label to $dest"
     $next = 'wenmar setup, then wenmar tui'
-    if ($env:WENMAR_STATION) {
-        $setupArgs = @('setup', '--yes', '--access-code', $env:WENMAR_STATION)
+    if ($env:WENMAR_PAIR) {
+        $setupArgs = @('setup', '--yes', '--pairing-code', $env:WENMAR_PAIR)
         if ($env:WENMAR_VIEW) { $setupArgs += @('--view', $env:WENMAR_VIEW) }
-        & $dest @setupArgs | Out-Null
+        # What setup prints is for a person who ran it by hand (its own next
+        # steps): it is shown only when setup fails. 'Continue' because Windows
+        # PowerShell turns a redirected stderr line into an error.
+        $oldPreference = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        try { $setupOut = & $dest @setupArgs 2>&1 } finally { $ErrorActionPreference = $oldPreference }
         if ($LASTEXITCODE -eq 0) {
-            Write-Host "This computer is set up for station $($env:WENMAR_STATION)"
+            Write-Host 'This computer is paired with the shop'
             $next = 'wenmar tui'
         } else {
-            Write-Host 'Could not set up the station; run: wenmar setup'
+            $setupOut | ForEach-Object { Write-Host "$_" }
+            Write-Host 'Could not pair this computer; run: wenmar setup'
         }
     }
     if (-not $env:WENMAR_NO_SHORTCUT) {
         try {
             $desktop = if ($env:WENMAR_DESKTOP_DIR) { $env:WENMAR_DESKTOP_DIR } else { [Environment]::GetFolderPath('Desktop') }
-            $shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $desktop 'Wenmar.lnk'))
-            $shortcut.TargetPath = $dest
-            $shortcut.Arguments = 'tui'
+            # The shortcut of an earlier install, named before "Wenmar Pro".
+            Remove-Item -Force (Join-Path $desktop 'Wenmar.lnk') -ErrorAction SilentlyContinue
+            $shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $desktop 'Wenmar Pro.lnk'))
+            # conhost.exe, not Windows Terminal: only the console host lets
+            # `wenmar tui --font-size` make the text large.
+            $shortcut.TargetPath = Join-Path $env:SystemRoot 'System32\conhost.exe'
+            $shortcut.Arguments = "`"$dest`" tui --font-size 24"
+            $shortcut.IconLocation = "$dest,0"
             $shortcut.WorkingDirectory = $env:USERPROFILE
-            $shortcut.Description = 'Wenmar'
+            $shortcut.Description = 'Wenmar Pro'
             $shortcut.Save()
-            Write-Host 'Added Wenmar to the desktop'
+            Write-Host 'Added Wenmar Pro to the desktop'
         } catch {
             Write-Host "Could not add the desktop shortcut: $_"
         }
