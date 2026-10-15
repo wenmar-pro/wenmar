@@ -120,7 +120,7 @@
     {
       "name": "setup",
       "path": "setup",
-      "about": "Sign this computer in to a shop: server + access code (the station)",
+      "about": "Pair this computer with a shop: server + a pairing code from the owner",
       "runnable": true,
       "write": true,
       "args": [
@@ -198,10 +198,10 @@
           "help": "Replace a hand-written or hand-edited installed skill"
         },
         {
-          "name": "--access-code",
+          "name": "--pairing-code",
           "takes_value": true,
           "required": false,
-          "help": "The shop's access code. With it `setup` asks nothing about the server or the code (install scripts pass it, with `--yes`)"
+          "help": "A pairing code from the shop owner (it works once, for one hour). With it `setup` asks nothing about the server or the code (install scripts pass it, with `--yes`)"
         },
         {
           "name": "--view",
@@ -218,7 +218,7 @@
     {
       "name": "login",
       "path": "login",
-      "about": "Sign in as a user of the saved station (user + PIN) and cache the session",
+      "about": "Sign in on this paired computer (user + PIN) and cache the session",
       "runnable": true,
       "write": false,
       "args": [],
@@ -2022,6 +2022,280 @@
       ]
     },
     {
+      "name": "review",
+      "path": "review",
+      "about": "Measure the shop, compare two reviews, see what to improve",
+      "runnable": false,
+      "write": false,
+      "args": [],
+      "flags": [],
+      "commands": [
+        {
+          "name": "measures",
+          "path": "review measures",
+          "about": "What each measure means, and whether it can be compared",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": []
+        },
+        {
+          "name": "list",
+          "path": "review list",
+          "about": "The reviews taken so far",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": []
+        },
+        {
+          "name": "show",
+          "path": "review show",
+          "about": "One review: its figures for the period, or each week",
+          "runnable": true,
+          "write": false,
+          "args": [
+            {
+              "name": "NAME",
+              "required": true,
+              "multiple": false,
+              "help": "The review's name (see `review list`)"
+            }
+          ],
+          "flags": [
+            {
+              "name": "--weekly",
+              "takes_value": false,
+              "required": false,
+              "help": "One figure per week instead of the period"
+            }
+          ]
+        },
+        {
+          "name": "create",
+          "path": "review create",
+          "about": "Take a review: measure a period and store it. A stored review never changes",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "NAME",
+              "required": true,
+              "multiple": false,
+              "help": "The review's name"
+            }
+          ],
+          "flags": [
+            {
+              "name": "--to",
+              "takes_value": true,
+              "required": false,
+              "help": "The last day of the period, `YYYY-MM-DD`"
+            },
+            {
+              "name": "--weeks",
+              "takes_value": true,
+              "required": false,
+              "help": "How many weeks the period covers"
+            },
+            {
+              "name": "--notes",
+              "takes_value": true,
+              "required": false,
+              "help": "A note kept with the review"
+            }
+          ]
+        },
+        {
+          "name": "remove",
+          "path": "review remove",
+          "about": "Remove a stored review",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "NAME",
+              "required": true,
+              "multiple": false,
+              "help": "The review's name"
+            }
+          ],
+          "flags": []
+        },
+        {
+          "name": "compare",
+          "path": "review compare",
+          "about": "Compare two reviews: the later one against the earlier one",
+          "runnable": true,
+          "write": false,
+          "args": [
+            {
+              "name": "BASELINE",
+              "required": true,
+              "multiple": false,
+              "help": "The earlier review's name"
+            },
+            {
+              "name": "REVIEW",
+              "required": true,
+              "multiple": false,
+              "help": "The later review's name"
+            }
+          ],
+          "flags": [
+            {
+              "name": "--publish",
+              "takes_value": false,
+              "required": false,
+              "help": "Leave out dollar figures, for showing outside the shop"
+            }
+          ]
+        },
+        {
+          "name": "findings",
+          "path": "review findings",
+          "about": "What is worth the owner's attention, with the figures",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": [
+            {
+              "name": "--to",
+              "takes_value": true,
+              "required": false,
+              "help": "The last day of the period, `YYYY-MM-DD`"
+            },
+            {
+              "name": "--weeks",
+              "takes_value": true,
+              "required": false,
+              "help": "How many weeks the period covers"
+            }
+          ]
+        },
+        {
+          "name": "observe",
+          "path": "review observe",
+          "about": "Record a number measured by hand",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "MEASURE",
+              "required": true,
+              "multiple": false,
+              "help": "The measure's key (see `review notes`)"
+            },
+            {
+              "name": "VALUE",
+              "required": true,
+              "multiple": false,
+              "help": "The number"
+            }
+          ],
+          "flags": [
+            {
+              "name": "--unit",
+              "takes_value": true,
+              "required": false,
+              "help": "The unit, when the measure takes one"
+            },
+            {
+              "name": "--on",
+              "takes_value": true,
+              "required": false,
+              "help": "The day it was measured, `YYYY-MM-DD`"
+            },
+            {
+              "name": "--subject",
+              "takes_value": true,
+              "required": false,
+              "help": "What it was measured on, such as a job"
+            },
+            {
+              "name": "--note",
+              "takes_value": true,
+              "required": false,
+              "help": "A note kept with the number"
+            }
+          ]
+        },
+        {
+          "name": "log-change",
+          "path": "review log-change",
+          "about": "Record something that changed at the shop",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "WHAT",
+              "required": true,
+              "multiple": false,
+              "help": "What changed, in the user's words"
+            }
+          ],
+          "flags": [
+            {
+              "name": "--kind",
+              "takes_value": true,
+              "required": false,
+              "help": "The kind of change, such as `people`"
+            },
+            {
+              "name": "--on",
+              "takes_value": true,
+              "required": false,
+              "help": "The day it changed, `YYYY-MM-DD`"
+            }
+          ]
+        },
+        {
+          "name": "notes",
+          "path": "review notes",
+          "about": "The hand measures, the observations and the change log",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": [
+            {
+              "name": "--from",
+              "takes_value": true,
+              "required": false,
+              "help": "First day, `YYYY-MM-DD`"
+            },
+            {
+              "name": "--to",
+              "takes_value": true,
+              "required": false,
+              "help": "Last day, `YYYY-MM-DD`"
+            }
+          ]
+        },
+        {
+          "name": "remove-note",
+          "path": "review remove-note",
+          "about": "Remove one observation or change by its id (see `review notes`)",
+          "runnable": true,
+          "write": true,
+          "args": [
+            {
+              "name": "KIND",
+              "required": true,
+              "multiple": false,
+              "help": "`observation` or `change`"
+            },
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false,
+              "help": "The id"
+            }
+          ],
+          "flags": []
+        }
+      ]
+    },
+    {
       "name": "reports",
       "path": "reports",
       "about": "FoxPro-view text reports: the appointment code list, maintenance required",
@@ -2604,12 +2878,19 @@
       "runnable": true,
       "write": false,
       "args": [],
-      "flags": []
+      "flags": [
+        {
+          "name": "--font-size",
+          "takes_value": true,
+          "required": false,
+          "help": "Windows: the console's font height in pixels for this window (the desktop shortcut passes 24). Other systems ignore it"
+        }
+      ]
     },
     {
       "name": "icon",
       "path": "icon",
-      "about": "Write the Wenmar icon to a file (.png, .ico or .icns)",
+      "about": "Write the Wenmar Pro icon to a file (.png, .ico or .icns)",
       "runnable": true,
       "write": false,
       "args": [
