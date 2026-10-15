@@ -1,15 +1,15 @@
 # wenmar
 
-`wenmar` is the client for [Wenmar](https://app.wenmarpro.com), the shop management system
+`wenmar` is the client for [Wenmar Pro](https://app.wenmarpro.com), the shop management system
 for repair shops: the terminal client the shop works in (`wenmar tui`) and a command line
 for scripts and coding agents. This repository holds **releases only**: prebuilt binaries,
 their checksums, the install scripts and the documents below. The source code is private.
 
 ## Install
 
-The owner's account page (`https://app.wenmarpro.com/account`, "Install on a computer")
-shows one line with the shop's station code already in it. It installs `wenmar`, remembers
-the station and adds a Wenmar shortcut to the desktop. Without a station code:
+The owner's computers page (`https://app.wenmarpro.com/account/stations`, "Add a computer")
+makes a one-time pairing code and shows one line with it in. It installs `wenmar`, pairs
+this computer with the shop and adds a Wenmar Pro shortcut to the desktop. Without a pairing code:
 
 Linux and macOS:
 
@@ -47,8 +47,8 @@ Options (environment variables):
 |---|---|---|
 | `WENMAR_VERSION` | Install this version, e.g. `0.2.0` | the latest release |
 | `WENMAR_INSTALL_DIR` | Where to put `wenmar` | `~/.local/bin`, or `%LOCALAPPDATA%\Programs\wenmar` on Windows |
-| `WENMAR_STATION` | The shop's access code: also sign this computer in to that station | not set: run `wenmar setup` |
-| `WENMAR_VIEW` | `foxpro` or `modern`: the view of `wenmar tui` (with `WENMAR_STATION`) | `modern` |
+| `WENMAR_PAIR` | A pairing code from the shop's owner (it works once, for one hour): also pair this computer with the shop | not set: run `wenmar setup` |
+| `WENMAR_VIEW` | `foxpro` or `modern`: the view of `wenmar tui` (with `WENMAR_PAIR`) | `modern` |
 | `WENMAR_NO_SHORTCUT` | Set to make no desktop shortcut | a shortcut is made |
 
 ## Update
@@ -94,5 +94,5 @@ sha256sum -c SHA256SUMS --ignore-missing
 
 ## Help
 
-Run `wenmar help`, or contact Wenmar support. Issues in this repository are not
+Run `wenmar help`, or contact Wenmar Pro support. Issues in this repository are not
 monitored.
