@@ -1,12 +1,12 @@
 ---
 name: wenmar
-description: Read and change data in a Wenmar auto-repair shop (work orders, customers, vehicles, parts, labor, packages) through the `wenmar` command-line client. Use when the user asks about the shop's work orders, estimates, customers, vehicles, parts, labor, or packages, or wants to create or update any of them.
+description: Read and change data in a Wenmar Pro auto-repair shop (work orders, customers, vehicles, parts, labor, packages) through the `wenmar` command-line client. Use when the user asks about the shop's work orders, estimates, customers, vehicles, parts, labor, or packages, or wants to create or update any of them.
 ---
 
-# Wenmar
+# Wenmar Pro
 
-`wenmar` is the command-line client for Wenmar, a shop-management system for
-auto-repair shops. Every command calls the shop's Wenmar server with **your
+`wenmar` is the command-line client for Wenmar Pro, a shop-management system for
+auto-repair shops. Every command calls the shop's Wenmar Pro server with **your
 agent token**. A `write` token can do the shop work the user who connected you
 can do; a `read` token can only read. No agent token can add, change, disable
 or re-PIN users, or create or revoke agent tokens: a person does that. Every
@@ -170,6 +170,30 @@ commands.
 Every answer says when the data was last refreshed (each evening). For a question about
 today, run `wenmar query refresh` first. Money is printed in dollars. Do not show SQL or
 table names unless the user asks.
+
+## How the shop is doing
+
+For "how are we doing", "what should we improve" and "did things get better", use
+`wenmar review`.
+
+- `wenmar review findings` — what is worth the owner's attention, with the figures. Give at
+  most three.
+- `wenmar review list` — the reviews that were taken.
+- `wenmar review compare baseline month_2` — a later review beside an earlier one, against
+  the same weeks last year and against the trend.
+- `wenmar review compare baseline month_2 --publish` — the same with no dollar figures, for
+  showing outside the shop.
+- `wenmar review create month_2 --weeks 8` — store a new review. Ask for the name and the
+  period first. A stored review never changes.
+- `wenmar review measures` — what each measure means.
+- `wenmar review observe estimate_minutes 14.5` — record a number measured by hand.
+- `wenmar review log-change "Hired a technician" --kind people` — record something that
+  changed at the shop.
+- `wenmar review notes` — the hand measures and the change log.
+
+A measure that compares "in part" changed partly because records are kept better now: say
+so. "After only" means there is no figure from before the move to Wenmar. A dash is nothing
+to measure, never zero.
 
 ## Pagination
 
