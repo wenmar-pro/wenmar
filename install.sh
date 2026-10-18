@@ -118,25 +118,30 @@ desktop_dir() {
 
 # The text size of the window the shortcut opens.
 FONT_SIZE=24
+# Its size in characters: the FoxPro view needs 80 x 25 or more, and a terminal
+# left at its own size is often smaller once the text is large.
+WINDOW_COLS=90
+WINDOW_ROWS=28
 
 # write_linux_launcher FILE: opens `wenmar tui` in a terminal that takes a text
-# size on its command line, else in any terminal at its own size.
+# and window size on its command line, else in any terminal at its own size.
 write_linux_launcher() {
   mkdir -p "$(dirname "$1")"
   {
-    printf '#!/bin/sh\nW="%s"\nS=%s\n' "$BIN_DIR/wenmar" "$FONT_SIZE"
+    printf '#!/bin/sh\nW="%s"\nS=%s\nC=%s\nR=%s\n' "$BIN_DIR/wenmar" "$FONT_SIZE" "$WINDOW_COLS" "$WINDOW_ROWS"
     cat <<'LAUNCH'
 has() { command -v "$1" >/dev/null 2>&1; }
-if has ghostty; then exec ghostty --font-size="$S" -e "$W" tui; fi
-if has kitty; then exec kitty -o font_size="$S" "$W" tui; fi
-if has alacritty; then exec alacritty -o font.size="$S" -e "$W" tui; fi
-if has foot; then exec foot -f "monospace:size=$S" "$W" tui; fi
-if has wezterm; then exec wezterm --config font_size="$S" start -- "$W" tui; fi
+if has ghostty; then exec ghostty --font-size="$S" --window-width="$C" --window-height="$R" -e "$W" tui; fi
+if has kitty; then exec kitty -o font_size="$S" -o remember_window_size=no -o initial_window_width="${C}c" -o initial_window_height="${R}c" "$W" tui; fi
+if has alacritty; then exec alacritty -o font.size="$S" -o window.dimensions.columns="$C" -o window.dimensions.lines="$R" -e "$W" tui; fi
+if has foot; then exec foot -f "monospace:size=$S" --window-size-chars="${C}x${R}" "$W" tui; fi
+if has wezterm; then exec wezterm --config font_size="$S" --config initial_cols="$C" --config initial_rows="$R" start -- "$W" tui; fi
+# Before the generic launchers, which cannot be given a size.
+if has gnome-terminal; then exec gnome-terminal --geometry="${C}x${R}" -- "$W" tui; fi
+if has konsole; then exec konsole -p TerminalColumns="$C" -p TerminalRows="$R" -e "$W" tui; fi
 if has xdg-terminal-exec; then exec xdg-terminal-exec "$W" tui; fi
 if has x-terminal-emulator; then exec x-terminal-emulator -e "$W" tui; fi
-if has gnome-terminal; then exec gnome-terminal -- "$W" tui; fi
-if has konsole; then exec konsole -e "$W" tui; fi
-if has xterm; then exec xterm -fa Monospace -fs "$S" -e "$W" tui; fi
+if has xterm; then exec xterm -fa Monospace -fs "$S" -geometry "${C}x${R}" -e "$W" tui; fi
 echo "no terminal program found; run: $W tui" >&2
 exit 1
 LAUNCH
@@ -145,13 +150,14 @@ LAUNCH
 }
 
 # write_mac_launcher FILE: opens Terminal on the app's command file at a large
-# text size when the Mac lets it control Terminal (it asks once), else as usual.
+# text size and window size when the Mac lets it control Terminal (it asks
+# once), else as usual (the command file still asks for the window size).
 write_mac_launcher() {
   {
-    printf '#!/bin/sh\nS=%s\n' "$FONT_SIZE"
+    printf '#!/bin/sh\nS=%s\nC=%s\nR=%s\n' "$FONT_SIZE" "$WINDOW_COLS" "$WINDOW_ROWS"
     cat <<'LAUNCH'
 CMD="$(cd "$(dirname "$0")/../Resources" && pwd)/Wenmar.command"
-/usr/bin/osascript - "$CMD" "$S" >/dev/null 2>&1 <<'OSA' && exit 0
+/usr/bin/osascript - "$CMD" "$S" "$C" "$R" >/dev/null 2>&1 <<'OSA' && exit 0
 on run argv
   set wasRunning to application "Terminal" is running
   tell application "Terminal"
@@ -167,6 +173,10 @@ on run argv
     end if
     try
       set font size of t to ((item 2 of argv) as integer)
+    end try
+    try
+      set number of columns of t to ((item 3 of argv) as integer)
+      set number of rows of t to ((item 4 of argv) as integer)
     end try
     activate
   end tell
@@ -210,7 +220,9 @@ make_shortcut() {
       # Wenmar.app and Wenmar.command: earlier installs, named before "Wenmar Pro".
       rm -rf "$APP" "$DESKTOP/Wenmar.app" "$DESKTOP/Wenmar.command"
       mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-      printf '#!/bin/sh\nexec "%s" tui\n' "$BIN_DIR/wenmar" > "$APP/Contents/Resources/Wenmar.command"
+      # The escape asks Terminal for a window of that many rows and columns.
+      printf '#!/bin/sh\nprintf "\\033[8;%s;%st"\nexec "%s" tui\n' \
+        "$WINDOW_ROWS" "$WINDOW_COLS" "$BIN_DIR/wenmar" > "$APP/Contents/Resources/Wenmar.command"
       chmod 755 "$APP/Contents/Resources/Wenmar.command"
       write_mac_launcher "$APP/Contents/MacOS/Wenmar"
       write_icon "$APP/Contents/Resources/wenmar.icns" || true
