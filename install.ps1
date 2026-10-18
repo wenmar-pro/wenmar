@@ -8,6 +8,7 @@
 #   WENMAR_VIEW          foxpro or modern: the view of `wenmar tui` (with WENMAR_PAIR)
 #   WENMAR_NO_SHORTCUT   set to make no desktop shortcut
 #   WENMAR_DESKTOP_DIR   where the shortcut goes (default: the desktop folder)
+#   WENMAR_NO_SUMATRA    set to skip installing SumatraPDF (wenmar prints through it without a dialog)
 # The download is checked against the release's SHA256SUMS before install.
 # Needs Windows 10 1803+ or Windows 11 (tar.exe).
 # Source of truth: dist/github-releases-repo/ in the private wenmar repository.
@@ -82,6 +83,28 @@ try {
         } else {
             $setupOut | ForEach-Object { Write-Host "$_" }
             Write-Host 'Could not pair this computer; run: wenmar setup'
+        }
+    }
+    # Printing without a dialog (printed-forms spec F11): wenmar's "auto" print mode hands the
+    # PDF to SumatraPDF. winget --scope user puts it in %LOCALAPPDATA%\SumatraPDF, the first
+    # place wenmar looks.
+    if (-not $env:WENMAR_NO_SUMATRA) {
+        $sumatraDirs = @($env:LOCALAPPDATA, $env:ProgramFiles, ${env:ProgramFiles(x86)}) | Where-Object { $_ }
+        $sumatra = $sumatraDirs | ForEach-Object { Join-Path $_ 'SumatraPDF\SumatraPDF.exe' } | Where-Object { Test-Path $_ } | Select-Object -First 1
+        if ($sumatra) {
+            Write-Host 'SumatraPDF found: wenmar prints without a dialog'
+        } elseif (Get-Command winget -ErrorAction SilentlyContinue) {
+            Write-Host 'Installing SumatraPDF so wenmar can print without a dialog'
+            $oldPreference = $ErrorActionPreference
+            $ErrorActionPreference = 'Continue'
+            try {
+                winget install --id SumatraPDF.SumatraPDF --exact --silent --scope user --accept-package-agreements --accept-source-agreements | Out-Host
+            } finally { $ErrorActionPreference = $oldPreference }
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host 'Could not install SumatraPDF: wenmar opens each PDF in the viewer instead (https://www.sumatrapdfreader.org)'
+            }
+        } else {
+            Write-Host 'Install SumatraPDF (https://www.sumatrapdfreader.org) to print without a dialog: until then wenmar opens each PDF in the viewer'
         }
     }
     if (-not $env:WENMAR_NO_SHORTCUT) {
