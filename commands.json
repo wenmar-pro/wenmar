@@ -128,11 +128,12 @@
           "name": "TARGET",
           "required": false,
           "multiple": false,
-          "help": "Connect a coding agent instead of this computer (plan 53)",
+          "help": "Connect an agent (Claude Code, Codex, Hermes, OpenClaw, any other) instead of this computer",
           "values": [
             "claude",
             "codex",
             "hermes",
+            "openclaw",
             "agent"
           ]
         }
@@ -155,13 +156,13 @@
           "name": "--name",
           "takes_value": true,
           "required": false,
-          "help": "Agent name for `setup claude|codex|hermes|agent` (default: the target name)"
+          "help": "Agent name for `setup claude|codex|hermes|openclaw|agent` (default: the target name)"
         },
         {
           "name": "--scope",
           "takes_value": true,
           "required": false,
-          "help": "Agent token scope for `setup claude|codex|hermes|agent`",
+          "help": "Agent token scope for `setup claude|codex|hermes|openclaw|agent`",
           "values": [
             "read",
             "write"
@@ -213,6 +214,11 @@
             "modern"
           ]
         }
+      ],
+      "examples": [
+        "wenmar setup --pairing-code K7QM-4XPD --yes",
+        "wenmar setup hermes --scope read",
+        "wenmar setup openclaw --profile-name shop-assistant"
       ]
     },
     {
@@ -393,6 +399,10 @@
               "required": false,
               "help": "Replay key: running again with the same key returns the first customer instead of creating another. Default: a new UUID per run"
             }
+          ],
+          "examples": [
+            "wenmar customers create --first-name Ada --last-name Lovelace",
+            "wenmar customers create --company-name \"ZZ Fleet Services\" --idempotency-key 3f2a9c1e-zz-fleet"
           ]
         },
         {
@@ -457,6 +467,10 @@
               "required": false,
               "help": "Remove the credit limit (no limit)"
             }
+          ],
+          "examples": [
+            "wenmar customers update 7 --last-name Byron",
+            "wenmar customers update 7 --tax-exempt true --credit-limit-cents 250000"
           ]
         },
         {
@@ -473,7 +487,10 @@
               "help": "Customer id"
             }
           ],
-          "flags": []
+          "flags": [],
+          "examples": [
+            "wenmar customers delete 7"
+          ]
         },
         {
           "name": "restore",
@@ -489,7 +506,10 @@
               "help": "Customer id"
             }
           ],
-          "flags": []
+          "flags": [],
+          "examples": [
+            "wenmar customers restore 7"
+          ]
         }
       ]
     },
@@ -620,6 +640,10 @@
               "required": false,
               "help": "Odometer unit code, as stored (default 0)"
             }
+          ],
+          "examples": [
+            "wenmar vehicles create --customer 7 --year 2015 --make Toyota --model Corolla",
+            "wenmar vehicles create --customer 7 --vin 2T1BURHE5FC123456 --odometer-reading 84250"
           ]
         },
         {
@@ -686,6 +710,10 @@
               "required": false,
               "help": "Odometer unit code, as stored (default 0)"
             }
+          ],
+          "examples": [
+            "wenmar vehicles update 3 --odometer-reading 91000",
+            "wenmar vehicles update 3 --license-plate CBXJ123"
           ]
         },
         {
@@ -702,7 +730,10 @@
               "help": "Vehicle id"
             }
           ],
-          "flags": []
+          "flags": [],
+          "examples": [
+            "wenmar vehicles delete 3"
+          ]
         },
         {
           "name": "restore",
@@ -718,7 +749,10 @@
               "help": "Vehicle id"
             }
           ],
-          "flags": []
+          "flags": [],
+          "examples": [
+            "wenmar vehicles restore 3"
+          ]
         }
       ]
     },
@@ -990,6 +1024,21 @@
           "flags": []
         },
         {
+          "name": "context",
+          "path": "wo context",
+          "about": "Everything before acting on one work order: the order, its summary, and the command for each next step",
+          "runnable": true,
+          "write": false,
+          "args": [
+            {
+              "name": "ID",
+              "required": true,
+              "multiple": false
+            }
+          ],
+          "flags": []
+        },
+        {
           "name": "services",
           "path": "wo services",
           "about": "A work order's services",
@@ -1070,6 +1119,10 @@
                   "required": false,
                   "help": "Replay key: running again with the same key returns the first service instead of adding another. Default: a new UUID per run"
                 }
+              ],
+              "examples": [
+                "wenmar wo services add 42 \"Front brake job\"",
+                "wenmar wo services add 42 \"Oil change\" --technician 4"
               ]
             },
             {
@@ -1132,6 +1185,10 @@
                   "required": false,
                   "help": "RFC 3339 timestamp"
                 }
+              ],
+              "examples": [
+                "wenmar wo services update 18 --technician 4",
+                "wenmar wo services update 18 --dismissed true"
               ]
             },
             {
@@ -1148,7 +1205,10 @@
                   "help": "Service id"
                 }
               ],
-              "flags": []
+              "flags": [],
+              "examples": [
+                "wenmar wo services remove 18"
+              ]
             }
           ]
         },
@@ -1267,7 +1327,19 @@
                   "takes_value": true,
                   "required": false,
                   "help": "Replay key: running again with the same key returns the first line instead of adding another. Default: a new UUID per run"
+                },
+                {
+                  "name": "--dry-run",
+                  "takes_value": false,
+                  "required": false,
+                  "help": "Show the line the server would store (price, total, warnings) and write nothing. `--service` is not checked"
                 }
+              ],
+              "examples": [
+                "wenmar wo line-items add 42 \"Brake pads\" --kind part --unit-price-cents 8999 --service 18",
+                "wenmar wo line-items add 42 \"Front brake labour\" --kind labor --quantity-hundredths 150 --service 18",
+                "wenmar wo line-items add 42 \"Shop supplies\" --kind fee --total-cents 500",
+                "wenmar wo line-items add 42 \"Brake pads\" --kind part --unit-price-cents 8999 --dry-run"
               ]
             },
             {
@@ -1329,6 +1401,9 @@
                   "required": false,
                   "help": "`-` reads stdin"
                 }
+              ],
+              "examples": [
+                "wenmar wo line-items update 77 --quantity-hundredths 200"
               ]
             },
             {
@@ -1345,7 +1420,10 @@
                   "help": "Line item id"
                 }
               ],
-              "flags": []
+              "flags": [],
+              "examples": [
+                "wenmar wo line-items remove 77"
+              ]
             }
           ]
         },
@@ -1446,7 +1524,17 @@
                   "takes_value": true,
                   "required": false,
                   "help": "`-` reads stdin"
+                },
+                {
+                  "name": "--dry-run",
+                  "takes_value": false,
+                  "required": false,
+                  "help": "Show the price the server would store for this sublet and write nothing"
                 }
+              ],
+              "examples": [
+                "wenmar wo sublets add 42 \"Wheel alignment\" --service 18 --unit-cost-cents 6000",
+                "wenmar wo sublets add 42 \"Wheel alignment\" --service 18 --unit-cost-cents 6000 --dry-run"
               ]
             },
             {
@@ -1501,6 +1589,9 @@
                   "required": false,
                   "help": "`-` reads stdin"
                 }
+              ],
+              "examples": [
+                "wenmar wo sublets update 9 --unit-price-cents 8995"
               ]
             },
             {
@@ -1517,7 +1608,10 @@
                   "help": "Sublet id"
                 }
               ],
-              "flags": []
+              "flags": [],
+              "examples": [
+                "wenmar wo sublets remove 9"
+              ]
             }
           ]
         },
@@ -1572,6 +1666,10 @@
               "required": false,
               "help": "Replay key: running again with the same key returns the first work order instead of opening another. Default: a new UUID per run"
             }
+          ],
+          "examples": [
+            "wenmar wo create \"Brakes squeal when stopping\" --customer 7 --vehicle 3",
+            "wenmar wo create --customer 7 --vehicle 3 --odometer-in 84250 --notes -"
           ]
         },
         {
@@ -1651,6 +1749,10 @@
               "takes_value": true,
               "required": false
             }
+          ],
+          "examples": [
+            "wenmar wo update 42 --odometer-out 84262",
+            "wenmar wo update 42 --type W --claim-number ZZ-1001"
           ]
         },
         {
@@ -1667,7 +1769,10 @@
               "help": "Work order id"
             }
           ],
-          "flags": []
+          "flags": [],
+          "examples": [
+            "wenmar wo start 42"
+          ]
         },
         {
           "name": "complete",
@@ -1683,7 +1788,10 @@
               "help": "Work order id"
             }
           ],
-          "flags": []
+          "flags": [],
+          "examples": [
+            "wenmar wo complete 42"
+          ]
         },
         {
           "name": "close",
@@ -1705,7 +1813,18 @@
               "takes_value": false,
               "required": false,
               "help": "Post the unpaid balance to the customer's account (needs billing terms)"
+            },
+            {
+              "name": "--dry-run",
+              "takes_value": false,
+              "required": false,
+              "help": "Show what closing would post (the server's preview) and write nothing. Exits as the close would: 0, or 4 `close_would_be_refused`"
             }
+          ],
+          "examples": [
+            "wenmar wo close 42",
+            "wenmar wo close 42 --charge-to-account",
+            "wenmar wo close 42 --charge-to-account --dry-run"
           ]
         },
         {
@@ -1729,6 +1848,9 @@
               "required": false,
               "help": "Why; stored as the closure reason. `-` reads stdin"
             }
+          ],
+          "examples": [
+            "wenmar wo void 42 --reason \"Opened by mistake\""
           ]
         },
         {
@@ -1752,6 +1874,9 @@
               "required": false,
               "help": "Why; stored as the closure reason. `-` reads stdin"
             }
+          ],
+          "examples": [
+            "wenmar wo decline 42 --reason \"Customer will think about it\""
           ]
         },
         {
@@ -1768,7 +1893,10 @@
               "help": "Work order id"
             }
           ],
-          "flags": []
+          "flags": [],
+          "examples": [
+            "wenmar wo reopen 42"
+          ]
         },
         {
           "name": "apply-package",
@@ -1797,6 +1925,9 @@
               "required": false,
               "help": "Replay key: running again with the same key returns the first service instead of applying the package twice. Default: a new UUID per run"
             }
+          ],
+          "examples": [
+            "wenmar wo apply-package 42 5"
           ]
         }
       ]
@@ -1816,6 +1947,32 @@
         }
       ],
       "flags": []
+    },
+    {
+      "name": "today",
+      "path": "today",
+      "about": "The shop right now: who you act as, the local date, and the open estimates and work orders by stage, oldest first",
+      "runnable": true,
+      "write": false,
+      "args": [],
+      "flags": []
+    },
+    {
+      "name": "prime",
+      "path": "prime",
+      "about": "Agent context for the start of a conversation: the skill, then the shop right now (`wenmar today`), as Markdown. Exits 0 even when the shop cannot be reached, saying why",
+      "runnable": true,
+      "write": false,
+      "args": [],
+      "flags": [
+        {
+          "name": "--limit",
+          "takes_value": true,
+          "required": false,
+          "help": "Orders listed per stage (1 to 5)",
+          "default": "5"
+        }
+      ]
     },
     {
       "name": "query",
@@ -1912,6 +2069,9 @@
               "required": false,
               "help": "A named parameter's value, `K=V` (repeatable)"
             }
+          ],
+          "examples": [
+            "wenmar query sql \"SELECT COUNT(*) AS work_orders FROM work_orders\""
           ]
         },
         {
@@ -1956,6 +2116,10 @@
               "required": false,
               "help": "A one-line description"
             }
+          ],
+          "examples": [
+            "wenmar query save zz_report --question \"How many work orders are there?\" --sql \"SELECT COUNT(*) AS work_orders FROM work_orders\"",
+            "wenmar query save zz_report --question \"How many work orders are there?\" --sql -"
           ]
         },
         {
@@ -1972,7 +2136,10 @@
               "help": "The report's name"
             }
           ],
-          "flags": []
+          "flags": [],
+          "examples": [
+            "wenmar query remove zz_report"
+          ]
         },
         {
           "name": "refresh",
@@ -2104,6 +2271,9 @@
               "required": false,
               "help": "A note kept with the review"
             }
+          ],
+          "examples": [
+            "wenmar review create month_2 --weeks 8"
           ]
         },
         {
@@ -2120,7 +2290,10 @@
               "help": "The review's name"
             }
           ],
-          "flags": []
+          "flags": [],
+          "examples": [
+            "wenmar review remove month_2"
+          ]
         },
         {
           "name": "compare",
@@ -2218,6 +2391,9 @@
               "required": false,
               "help": "A note kept with the number"
             }
+          ],
+          "examples": [
+            "wenmar review observe estimate_minutes 14.5"
           ]
         },
         {
@@ -2247,6 +2423,9 @@
               "required": false,
               "help": "The day it changed, `YYYY-MM-DD`"
             }
+          ],
+          "examples": [
+            "wenmar review log-change \"Hired a technician\" --kind people"
           ]
         },
         {
@@ -2291,7 +2470,10 @@
               "help": "The id"
             }
           ],
-          "flags": []
+          "flags": [],
+          "examples": [
+            "wenmar review remove-note observation 3"
+          ]
         }
       ]
     },
@@ -2599,6 +2781,9 @@
       "name": "upgrade",
       "path": "upgrade",
       "about": "Update wenmar to the newest release (or `--version V`), verified by SHA-256",
+      "aliases": [
+        "update"
+      ],
       "runnable": true,
       "write": false,
       "args": [],
@@ -2620,16 +2805,29 @@
     {
       "name": "skill",
       "path": "skill",
-      "about": "Print the bundled agent skill (SKILL.md), or install it",
+      "about": "Print the bundled agent skill (SKILL.md), or install or remove it",
       "runnable": true,
       "write": false,
-      "args": [],
+      "args": [
+        {
+          "name": "NAME",
+          "required": false,
+          "multiple": false,
+          "help": "A reference to print instead of SKILL.md, e.g. `work-orders`",
+          "values": [
+            "work-orders",
+            "business-questions",
+            "output-and-errors",
+            "tools-and-mcp"
+          ]
+        }
+      ],
       "flags": [],
       "commands": [
         {
           "name": "install",
           "path": "skill install",
-          "about": "Install the skill for Claude Code (~/.claude/skills/wenmar) and/or other agents (~/.agents/skills/wenmar). Default: both",
+          "about": "Install the skill where agents look for skills: Claude Code (~/.claude/skills/wenmar), Hermes (~/.hermes/skills/wenmar), OpenClaw (~/.openclaw/skills/wenmar) and ~/.agents/skills/wenmar (Codex and others)",
           "runnable": true,
           "write": false,
           "args": [],
@@ -2638,9 +2836,12 @@
               "name": "--target",
               "takes_value": true,
               "required": false,
+              "help": "Where to install; repeat for several. Default: every agent found on this computer, plus `agents`",
               "values": [
                 "claude",
-                "agents"
+                "agents",
+                "hermes",
+                "openclaw"
               ]
             },
             {
@@ -2648,6 +2849,34 @@
               "takes_value": false,
               "required": false,
               "help": "Replace a copy that wenmar did not write or that was edited by hand"
+            }
+          ]
+        },
+        {
+          "name": "uninstall",
+          "path": "skill uninstall",
+          "about": "Remove the skill copies wenmar installed",
+          "runnable": true,
+          "write": false,
+          "args": [],
+          "flags": [
+            {
+              "name": "--target",
+              "takes_value": true,
+              "required": false,
+              "help": "Where to remove it from; repeat for several. Default: every location",
+              "values": [
+                "claude",
+                "agents",
+                "hermes",
+                "openclaw"
+              ]
+            },
+            {
+              "name": "--force",
+              "takes_value": false,
+              "required": false,
+              "help": "Also remove a copy that wenmar did not write or that was edited by hand"
             }
           ]
         }
@@ -2706,7 +2935,19 @@
               "takes_value": true,
               "required": false,
               "help": "Sent as `Idempotency-Key`: re-run with the same key to retry a create safely. No key is sent without this flag"
+            },
+            {
+              "name": "--dry-run",
+              "takes_value": false,
+              "required": false,
+              "help": "Call the tool's read-only preview with the same params instead, and write nothing (`work_orders.close`, `receipts.create`, `credit_applications.create`). Exit 4 `no_preview` for any other tool"
             }
+          ],
+          "examples": [
+            "wenmar tools call customers.show --params '{\"id\": 7}'",
+            "wenmar tools call customers.create --params @customer.json --idempotency-key 3f2a9c1e-ada",
+            "wenmar tools call customers.create --params -",
+            "wenmar tools call work_orders.close --params '{\"work_order_id\": 42, \"charge_to_account\": true}' --dry-run"
           ]
         }
       ]
@@ -2770,6 +3011,10 @@
                 "no"
               ]
             }
+          ],
+          "examples": [
+            "wenmar agents create front-desk --scope read",
+            "wenmar agents create parts-bot --permissions customers.read,work_orders.write --irreversible no"
           ]
         },
         {
@@ -2786,7 +3031,10 @@
               "help": "Id from `wenmar agents list`"
             }
           ],
-          "flags": []
+          "flags": [],
+          "examples": [
+            "wenmar agents revoke 12"
+          ]
         }
       ]
     },
