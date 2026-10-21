@@ -4,6 +4,8 @@
 # Env:
 #   WENMAR_VERSION       version to install, e.g. 0.2.0 (default: the latest release)
 #   WENMAR_INSTALL_DIR   where to put `wenmar` (default: $HOME/.local/bin)
+#   WENMAR_NO_MODIFY_PATH  set to leave the shell startup files alone (otherwise, when the
+#                        install folder is not on PATH, a line adds it: ~/.bashrc, ~/.zshrc, ...)
 #   WENMAR_DOWNLOAD_URL  release downloads (default: GitHub releases of wenmar-pro/wenmar)
 #   WENMAR_PAIR          a pairing code from the shop's owner: also pair this computer with the shop
 #   WENMAR_VIEW          foxpro or modern: the view of `wenmar tui` (with WENMAR_PAIR)
@@ -77,12 +79,64 @@ chmod 755 "$INSTALL_DIR/.wenmar.new"
 mv -f "$INSTALL_DIR/.wenmar.new" "$INSTALL_DIR/wenmar"
 
 say "installed $LABEL to $INSTALL_DIR/wenmar"
-case ":$PATH:" in
-  *":$INSTALL_DIR:"*) ;;
-  *) say "add $INSTALL_DIR to your PATH" ;;
-esac
 
 BIN_DIR="$(cd "$INSTALL_DIR" && pwd)"
+
+# path_files: the startup files of the user's shells that get the PATH line:
+# the one of the login shell (made when missing) and any other that exists.
+path_files() {
+  case "$(basename "${SHELL:-sh}")" in
+    zsh) printf '%s\n' "$HOME/.zshrc" ;;
+    bash)
+      # Terminal on a Mac starts a login shell, which reads .bash_profile.
+      if [ "$(uname -s)" = Darwin ]; then
+        printf '%s\n' "$HOME/.bash_profile"
+      else
+        printf '%s\n' "$HOME/.bashrc"
+      fi
+      ;;
+    fish) ;;
+    *) printf '%s\n' "$HOME/.profile" ;;
+  esac
+  for f in .bashrc .bash_profile .zshrc; do
+    if [ -f "$HOME/$f" ]; then printf '%s\n' "$HOME/$f"; fi
+  done
+}
+
+# Puts BIN_DIR on PATH in every new terminal: under `curl | sh` this script
+# cannot change the PATH of the shell that ran it. Each file gets the line once.
+add_to_path() {
+  case ":$PATH:" in *":$BIN_DIR:"* | *":$INSTALL_DIR:"*) return 0 ;; esac
+  if [ -n "${WENMAR_NO_MODIFY_PATH:-}" ]; then
+    say "add $BIN_DIR to your PATH"
+    return 0
+  fi
+  LINE="case \":\$PATH:\" in *\":$BIN_DIR:\"*) ;; *) export PATH=\"$BIN_DIR:\$PATH\" ;; esac"
+  CHANGED=""
+  OLD_IFS="$IFS"
+  IFS='
+'
+  for f in $(path_files | awk '!seen[$0]++'); do
+    if [ -f "$f" ] && grep -qF "$LINE" "$f"; then continue; fi
+    printf '\n# Added by the wenmar installer: the wenmar program.\n%s\n' "$LINE" >> "$f" || continue
+    CHANGED="$CHANGED ${f#"$HOME/"}"
+  done
+  IFS="$OLD_IFS"
+  if [ "$(basename "${SHELL:-}")" = fish ]; then
+    FISH="${XDG_CONFIG_HOME:-$HOME/.config}/fish/conf.d/wenmar.fish"
+    if mkdir -p "$(dirname "$FISH")" &&
+      printf '# Added by the wenmar installer: the wenmar program.\ncontains -- "%s" $PATH; or set -gx PATH "%s" $PATH\n' \
+        "$BIN_DIR" "$BIN_DIR" > "$FISH"; then
+      CHANGED="$CHANGED ${FISH#"$HOME/"}"
+    fi
+  fi
+  if [ -n "$CHANGED" ]; then
+    say "added $BIN_DIR to PATH in$CHANGED; open a new terminal to use wenmar"
+  else
+    say "$BIN_DIR is already on PATH in new terminals; open a new terminal to use wenmar"
+  fi
+}
+add_to_path || say "add $BIN_DIR to your PATH"
 
 # Pairing. stdin is /dev/null because under `curl | sh` it is this script.
 NEXT="wenmar setup, then wenmar tui"
@@ -251,7 +305,12 @@ EOF
       write_icon "$ICON" || ICON=""
       LAUNCHER="$DATA/wenmar/open-tui"
       write_linux_launcher "$LAUNCHER"
+      # The applications menu (the start menu) lists every entry in this folder.
       write_desktop_entry "$APPS/wenmar.desktop" "$LAUNCHER" "$ICON"
+      if command -v update-desktop-database >/dev/null 2>&1; then
+        update-desktop-database "$APPS" >/dev/null 2>&1 || true
+      fi
+      say "added Wenmar Pro to the applications menu"
       [ -d "$DESKTOP" ] || return 0
       write_desktop_entry "$DESKTOP/wenmar.desktop" "$LAUNCHER" "$ICON"
       # GNOME starts a desktop file only when it is marked trusted.
