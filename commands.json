@@ -179,7 +179,7 @@
           "name": "--irreversible",
           "takes_value": true,
           "required": false,
-          "help": "Whether the agent may post invoices, void and delete: `yes` or `no`. Default: yes from the command line, no through a chat connector",
+          "help": "Whether the agent may post invoices, take payments, void and delete: `yes` or `no`. Default: yes from the command line, no through a chat connector",
           "values": [
             "yes",
             "no"
@@ -3005,7 +3005,7 @@
               "name": "--irreversible",
               "takes_value": true,
               "required": false,
-              "help": "Whether the agent may post invoices, void and delete: `yes` or `no`. Default: yes from the command line, no through a chat connector",
+              "help": "Whether the agent may post invoices, take payments, void and delete: `yes` or `no`. Default: yes from the command line, no through a chat connector",
               "values": [
                 "yes",
                 "no"
