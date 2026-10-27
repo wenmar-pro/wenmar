@@ -171,7 +171,7 @@ desktop_dir() {
 }
 
 # The text size of the window the shortcut opens.
-FONT_SIZE=24
+FONT_SIZE=20
 # Its size in characters: the FoxPro view needs 80 x 25 or more, and a terminal
 # left at its own size is often smaller once the text is large.
 WINDOW_COLS=90
