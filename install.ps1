@@ -116,7 +116,7 @@ try {
             # conhost.exe, not Windows Terminal: only the console host lets
             # `wenmar tui --font-size` make the text large.
             $shortcut.TargetPath = Join-Path $env:SystemRoot 'System32\conhost.exe'
-            $shortcut.Arguments = "`"$dest`" tui --font-size 24"
+            $shortcut.Arguments = "`"$dest`" tui --font-size 20"
             $shortcut.IconLocation = "$dest,0"
             $shortcut.WorkingDirectory = $env:USERPROFILE
             $shortcut.Description = 'Wenmar Pro'
