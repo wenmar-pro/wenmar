@@ -2624,6 +2624,55 @@
       ]
     },
     {
+      "name": "payroll",
+      "path": "payroll",
+      "about": "Payroll: the employer reports (Ontario EHT, WSIB premiums)",
+      "runnable": false,
+      "write": false,
+      "args": [],
+      "flags": [],
+      "commands": [
+        {
+          "name": "eht",
+          "path": "payroll eht",
+          "about": "Ontario Employer Health Tax for one year",
+          "runnable": true,
+          "write": false,
+          "args": [
+            {
+              "name": "YEAR",
+              "required": true,
+              "multiple": false,
+              "help": "The calendar year, e.g. 2026"
+            }
+          ],
+          "flags": []
+        },
+        {
+          "name": "wsib",
+          "path": "payroll wsib",
+          "about": "WSIB premiums by department, for a range in one calendar year",
+          "runnable": true,
+          "write": false,
+          "args": [
+            {
+              "name": "FROM",
+              "required": true,
+              "multiple": false,
+              "help": "First pay date, YYYY-MM-DD"
+            },
+            {
+              "name": "TO",
+              "required": true,
+              "multiple": false,
+              "help": "Last pay date, YYYY-MM-DD"
+            }
+          ],
+          "flags": []
+        }
+      ]
+    },
+    {
       "name": "users",
       "path": "users",
       "about": "Users: list, show",
