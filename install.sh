@@ -12,12 +12,15 @@
 #   WENMAR_NO_SHORTCUT   set to make no desktop shortcut
 #   WENMAR_DESKTOP_DIR   where the shortcut goes (default: the desktop folder)
 # The download is checked against the release's SHA256SUMS before install.
+# When minisign is installed, SHA256SUMS is also checked against Wenmar's signing key.
 # Source of truth: dist/github-releases-repo/ in the private wenmar repository.
 set -eu
 
 DOWNLOAD_URL="${WENMAR_DOWNLOAD_URL:-https://github.com/wenmar-pro/wenmar/releases}"
 DOWNLOAD_URL="${DOWNLOAD_URL%/}"
 INSTALL_DIR="${WENMAR_INSTALL_DIR:-$HOME/.local/bin}"
+# crates/client/release-signing.pub (the key line): releases are signed with it.
+WENMAR_SIGNING_KEY="RWTzabcMbvCtyTSUX4JiSqAXBRFqpRKRarfXF0BMawN0xVyNK7lQgIvD"
 
 say() { printf 'wenmar-install: %s\n' "$*" >&2; }
 die() { say "error: $*"; exit 1; }
@@ -66,6 +69,13 @@ trap 'rm -rf "$TMP"' EXIT INT TERM
 say "downloading $ASSET ($LABEL)"
 fetch "$BASE/SHA256SUMS" "$TMP/SHA256SUMS" || die "could not download SHA256SUMS from $BASE"
 fetch "$BASE/$ASSET" "$TMP/$ASSET" || die "could not download $ASSET from $BASE"
+if command -v minisign >/dev/null 2>&1; then
+  fetch "$BASE/SHA256SUMS.minisig" "$TMP/SHA256SUMS.minisig" || die "could not download SHA256SUMS.minisig from $BASE"
+  minisign -Vq -P "$WENMAR_SIGNING_KEY" -m "$TMP/SHA256SUMS" -x "$TMP/SHA256SUMS.minisig" \
+    || die "SHA256SUMS is not signed by Wenmar; nothing was installed"
+else
+  say "minisign not found: checked the SHA-256 only"
+fi
 
 EXPECTED="$(awk -v a="$ASSET" '$2 == a || $2 == "*" a { print tolower($1); exit }' "$TMP/SHA256SUMS")"
 [ -n "$EXPECTED" ] || die "SHA256SUMS has no line for $ASSET"
