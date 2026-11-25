@@ -6,7 +6,9 @@
 #   WENMAR_DOWNLOAD_URL  release downloads (default: GitHub releases of wenmar-pro/wenmar)
 #   WENMAR_PAIR          a pairing code from the shop's owner: also pair this computer with the shop
 #   WENMAR_VIEW          foxpro or modern: the view of `wenmar tui` (with WENMAR_PAIR)
-#   WENMAR_NO_SHORTCUT   set to make no desktop shortcut
+#   WENMAR_SHORTCUT      set to add a "Wenmar Pro Terminal" shortcut (made by default only
+#                        with WENMAR_VIEW=foxpro; the desktop app is "Wenmar Pro")
+#   WENMAR_NO_SHORTCUT   set to make no shortcut, even with WENMAR_SHORTCUT or the FoxPro view
 #   WENMAR_DESKTOP_DIR   where the shortcut goes (default: the desktop folder)
 #   WENMAR_NO_SUMATRA    set to skip installing SumatraPDF (wenmar prints through it without a dialog)
 # The download is checked against the release's SHA256SUMS before install.
@@ -107,21 +109,34 @@ try {
             Write-Host 'Install SumatraPDF (https://www.sumatrapdfreader.org) to print without a dialog: until then wenmar opens each PDF in the viewer'
         }
     }
-    if (-not $env:WENMAR_NO_SHORTCUT) {
+    $desktop = if ($env:WENMAR_DESKTOP_DIR) { $env:WENMAR_DESKTOP_DIR } else { [Environment]::GetFolderPath('Desktop') }
+    # Before the desktop app, this shortcut was called "Wenmar Pro" (and before that "Wenmar"),
+    # the desktop app's name. Remove it only when it opens the terminal client.
+    Remove-Item -Force (Join-Path $desktop 'Wenmar.lnk') -ErrorAction SilentlyContinue
+    try {
+        $oldPath = Join-Path $desktop 'Wenmar Pro.lnk'
+        if (Test-Path $oldPath) {
+            $old = (New-Object -ComObject WScript.Shell).CreateShortcut($oldPath)
+            if ($old.TargetPath -like '*\conhost.exe' -and $old.Arguments -like '* tui*') {
+                Remove-Item -Force $oldPath
+            }
+        }
+    } catch {
+        Write-Host "Could not check the old shortcut: $_"
+    }
+    $wantShortcut = (-not $env:WENMAR_NO_SHORTCUT) -and ($env:WENMAR_SHORTCUT -or $env:WENMAR_VIEW -eq 'foxpro')
+    if ($wantShortcut) {
         try {
-            $desktop = if ($env:WENMAR_DESKTOP_DIR) { $env:WENMAR_DESKTOP_DIR } else { [Environment]::GetFolderPath('Desktop') }
-            # The shortcut of an earlier install, named before "Wenmar Pro".
-            Remove-Item -Force (Join-Path $desktop 'Wenmar.lnk') -ErrorAction SilentlyContinue
-            $shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $desktop 'Wenmar Pro.lnk'))
+            $shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $desktop 'Wenmar Pro Terminal.lnk'))
             # conhost.exe, not Windows Terminal: only the console host lets
             # `wenmar tui --font-size` make the text large.
             $shortcut.TargetPath = Join-Path $env:SystemRoot 'System32\conhost.exe'
             $shortcut.Arguments = "`"$dest`" tui --font-size 20"
             $shortcut.IconLocation = "$dest,0"
             $shortcut.WorkingDirectory = $env:USERPROFILE
-            $shortcut.Description = 'Wenmar Pro'
+            $shortcut.Description = 'Wenmar Pro Terminal'
             $shortcut.Save()
-            Write-Host 'Added Wenmar Pro to the desktop'
+            Write-Host 'Added Wenmar Pro Terminal to the desktop'
         } catch {
             Write-Host "Could not add the desktop shortcut: $_"
         }
