@@ -8,8 +8,9 @@ their checksums, the install scripts and the documents below. The source code is
 ## Install
 
 The owner's computers page (`https://app.wenmarpro.com/account/stations`, "Add a computer")
-makes a one-time pairing code and shows one line with it in. It installs `wenmar`, pairs
-this computer with the shop and adds a Wenmar Pro shortcut to the desktop. Without a pairing code:
+makes a one-time pairing code and shows one line with it in. It installs `wenmar` and pairs
+this computer with the shop. The shop's computers use the desktop app (Wenmar Pro); a
+computer that keeps the FoxPro view also gets a "Wenmar Pro Terminal" shortcut. Without a pairing code:
 
 Linux and macOS:
 
@@ -49,7 +50,8 @@ Options (environment variables):
 | `WENMAR_INSTALL_DIR` | Where to put `wenmar` | `~/.local/bin`, or `%LOCALAPPDATA%\Programs\wenmar` on Windows |
 | `WENMAR_PAIR` | A pairing code from the shop's owner (it works once, for one hour): also pair this computer with the shop | not set: run `wenmar setup` |
 | `WENMAR_VIEW` | `foxpro` or `modern`: the view of `wenmar tui` (with `WENMAR_PAIR`) | `modern` |
-| `WENMAR_NO_SHORTCUT` | Set to make no desktop shortcut | a shortcut is made |
+| `WENMAR_SHORTCUT` | Set to add a "Wenmar Pro Terminal" shortcut to the desktop (and the Linux applications menu) | only with `WENMAR_VIEW=foxpro` |
+| `WENMAR_NO_SHORTCUT` | Set to make no shortcut, even with `WENMAR_SHORTCUT` or the FoxPro view | not set |
 
 ## Update
 
