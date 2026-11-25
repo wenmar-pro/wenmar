@@ -9,7 +9,9 @@
 #   WENMAR_DOWNLOAD_URL  release downloads (default: GitHub releases of wenmar-pro/wenmar)
 #   WENMAR_PAIR          a pairing code from the shop's owner: also pair this computer with the shop
 #   WENMAR_VIEW          foxpro or modern: the view of `wenmar tui` (with WENMAR_PAIR)
-#   WENMAR_NO_SHORTCUT   set to make no desktop shortcut
+#   WENMAR_SHORTCUT      set to add a "Wenmar Pro Terminal" shortcut (made by default only
+#                        with WENMAR_VIEW=foxpro; the desktop app is "Wenmar Pro")
+#   WENMAR_NO_SHORTCUT   set to make no shortcut, even with WENMAR_SHORTCUT or the FoxPro view
 #   WENMAR_DESKTOP_DIR   where the shortcut goes (default: the desktop folder)
 # The download is checked against the release's SHA256SUMS before install.
 # When minisign is installed, SHA256SUMS is also checked against Wenmar's signing key.
@@ -254,7 +256,7 @@ LAUNCH
 
 write_desktop_entry() { # write_desktop_entry FILE LAUNCHER [ICON]
   {
-    printf '[Desktop Entry]\nType=Application\nName=Wenmar Pro\n'
+    printf '[Desktop Entry]\nType=Application\nName=Wenmar Pro Terminal\n'
     printf 'Comment=Wenmar Pro terminal client\n'
     printf 'Exec="%s"\n' "$2"
     if [ -n "${3:-}" ]; then printf 'Icon=%s\n' "$3"; fi
@@ -270,17 +272,46 @@ write_icon() {
   [ -s "$1" ]
 }
 
-# A "Wenmar Pro" shortcut that opens the terminal client. A desktop folder that
-# does not exist is never created.
+# Before the desktop app, the terminal client's shortcut was called "Wenmar Pro", the
+# desktop app's name. Remove it, only when it is provably the terminal client's.
+remove_old_shortcut() {
+  DESKTOP="$(desktop_dir)"
+  case "$(uname -s)" in
+    Darwin)
+      OLD="$DESKTOP/Wenmar Pro.app"
+      if grep -q 'com.wenmarpro.wenmar-terminal' "$OLD/Contents/Info.plist" 2>/dev/null; then
+        rm -rf "$OLD"
+      fi
+      ;;
+    Linux)
+      DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
+      for OLD in "$DATA/applications/wenmar.desktop" "$DESKTOP/wenmar.desktop"; do
+        if grep -q 'wenmar/open-tui' "$OLD" 2>/dev/null; then
+          rm -f "$OLD"
+        fi
+      done
+      ;;
+  esac
+}
+
+# wants_shortcut: true when this install makes a shortcut.
+wants_shortcut() {
+  [ -z "${WENMAR_NO_SHORTCUT:-}" ] || return 1
+  [ -n "${WENMAR_SHORTCUT:-}" ] && return 0
+  [ "${WENMAR_VIEW:-}" = foxpro ]
+}
+
+# A "Wenmar Pro Terminal" shortcut that opens the terminal client. A desktop
+# folder that does not exist is never created.
 make_shortcut() {
-  [ -z "${WENMAR_NO_SHORTCUT:-}" ] || return 0
+  wants_shortcut || return 0
   DESKTOP="$(desktop_dir)"
   case "$(uname -s)" in
     Darwin)
       [ -d "$DESKTOP" ] || return 0
       # An app folder, so the Finder shows the icon. Its program opens
       # Terminal on a command file kept inside the app.
-      APP="$DESKTOP/Wenmar Pro.app"
+      APP="$DESKTOP/Wenmar Pro Terminal.app"
       # Wenmar.app and Wenmar.command: earlier installs, named before "Wenmar Pro".
       rm -rf "$APP" "$DESKTOP/Wenmar.app" "$DESKTOP/Wenmar.command"
       mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
@@ -295,8 +326,8 @@ make_shortcut() {
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>CFBundleName</key><string>Wenmar Pro</string>
-  <key>CFBundleDisplayName</key><string>Wenmar Pro</string>
+  <key>CFBundleName</key><string>Wenmar Pro Terminal</string>
+  <key>CFBundleDisplayName</key><string>Wenmar Pro Terminal</string>
   <key>CFBundleIdentifier</key><string>com.wenmarpro.wenmar-terminal</string>
   <key>CFBundleExecutable</key><string>Wenmar</string>
   <key>CFBundleIconFile</key><string>wenmar</string>
@@ -305,7 +336,7 @@ make_shortcut() {
 </dict>
 </plist>
 EOF
-      say "added Wenmar Pro to the desktop"
+      say "added Wenmar Pro Terminal to the desktop"
       ;;
     Linux)
       DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
@@ -316,21 +347,22 @@ EOF
       LAUNCHER="$DATA/wenmar/open-tui"
       write_linux_launcher "$LAUNCHER"
       # The applications menu (the start menu) lists every entry in this folder.
-      write_desktop_entry "$APPS/wenmar.desktop" "$LAUNCHER" "$ICON"
+      write_desktop_entry "$APPS/wenmar-terminal.desktop" "$LAUNCHER" "$ICON"
       if command -v update-desktop-database >/dev/null 2>&1; then
         update-desktop-database "$APPS" >/dev/null 2>&1 || true
       fi
-      say "added Wenmar Pro to the applications menu"
+      say "added Wenmar Pro Terminal to the applications menu"
       [ -d "$DESKTOP" ] || return 0
-      write_desktop_entry "$DESKTOP/wenmar.desktop" "$LAUNCHER" "$ICON"
+      write_desktop_entry "$DESKTOP/wenmar-terminal.desktop" "$LAUNCHER" "$ICON"
       # GNOME starts a desktop file only when it is marked trusted.
       if [ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ] && command -v gio >/dev/null 2>&1; then
-        gio set "$DESKTOP/wenmar.desktop" metadata::trusted true 2>/dev/null || true
+        gio set "$DESKTOP/wenmar-terminal.desktop" metadata::trusted true 2>/dev/null || true
       fi
-      say "added Wenmar Pro to the desktop"
+      say "added Wenmar Pro Terminal to the desktop"
       ;;
   esac
 }
+remove_old_shortcut || true
 make_shortcut || say "could not add the desktop shortcut"
 
 say "next: $NEXT"
